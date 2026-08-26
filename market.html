@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script src="mock-api.js"></script>
+  <script src="tutorial-guide.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market – Culture Parc</title>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+    --gris-dark: #1a1a1a;
+    --rouge: #c0392b;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+
+    /* ══ NAVBAR ══════════════════════════════════════════ */
+    .navbar {
+        position: fixed;
+        width: 100%;
+        padding: 18px 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 999;
+        background: linear-gradient(135deg,rgba(0,0,0,0.55),rgba(26,26,26,0.45),rgba(255,106,0,0.35));
+        backdrop-filter: blur(7px);
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo-wrap {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+
+    .logo-img {
+        height: 42px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .nav-center {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+        .nav-center a {
+            font-size: 14.5px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: background 0.15s, color 0.15s;
+        }
+
+            .nav-center a:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .nav-center a.active {
+                background: rgba(255,140,0,0.18);
+                color: var(--orange);
+                box-shadow: 0 0 0 1px rgba(255,140,0,0.25);
+            }
+
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-account-icon { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+
+    /* Bouton Se connecter */
+    .btn-login {
+        background: var(--orange);
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 9px 22px;
+        border-radius: 8px;
+        border: none;
+        text-decoration: none;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        box-shadow: 0 2px 12px rgba(255,140,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+
+        .btn-login:hover {
+            background: var(--orange-dark);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 18px rgba(255,140,0,0.45);
+        }
+
+    /* Bouton S'inscrire */
+    .btn-register {
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.9);
+        font-weight: 700;
+        font-size: 14px;
+        padding: 9px 22px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(255,255,255,0.2);
+        text-decoration: none;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+        .btn-register:hover {
+            background: rgba(255,255,255,0.16);
+            border-color: rgba(255,255,255,0.4);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+  /* ══ BURGER MOBILE ════════════════════════════════════ */
+  .burger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .burger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+  .burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .burger-btn.open span:nth-child(2) { opacity: 0; }
+  .burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,10,0.97);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .mobile-menu.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .mobile-menu a {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mobile-menu a:hover,
+  .mobile-menu a.active {
+    background: rgba(255,140,0,0.15);
+    color: var(--orange);
+  }
+  .mobile-menu .mobile-menu-divider {
+    width: 60px;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 10px 0;
+  }
+  .mobile-menu .btn-login,
+  .mobile-menu .btn-register {
+    width: 200px;
+    text-align: center;
+  }
+  .mobile-menu-close {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+  /* ══ PAGE MARKET ══════════════════════════════════════ */
+  .market-page { padding-top: 90px; min-height: 100vh; background: #0a0a0a; }
+
+  /* ── En-tête tarifs ──────────────────────────────────── */
+  .tarifs-header {
+    background: #111; border-bottom: 1px solid rgba(255,255,255,0.06);
+    padding: 40px 0 32px;
+  }
+  .tarifs-title {
+    font-family: 'Montserrat', sans-serif; font-weight: 900;
+    font-size: clamp(22px, 4vw, 38px); text-align: center;
+    color: white; letter-spacing: -0.5px; margin-bottom: 28px;
+    text-transform: uppercase;
+  }
+  .tarifs-title span { color: var(--orange); }
+  .tarifs-row {
+    display: flex; justify-content: center; align-items: stretch;
+    gap: 0; flex-wrap: wrap; max-width: 760px; margin: 0 auto;
+    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; overflow: hidden;
+  }
+  .tarif-item {
+    flex: 1; min-width: 160px;
+    padding: 18px 20px; text-align: center;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    background: #1a1a1a;
+  }
+  .tarif-item:last-child { border-right: none; }
+  .tarif-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.5); margin-bottom: 8px; }
+  .tarif-price { font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 900; color: white; }
+  .tarif-item.avant-premiere { background: var(--rouge); }
+  .tarif-item.avant-premiere .tarif-label { color: rgba(255,255,255,0.8); }
+  .tarif-item.avant-premiere .tarif-price { color: white; }
+
+  /* ── Liste des films ─────────────────────────────────── */
+  .films-list-section {
+    padding: 50px 0 80px; background: #0a0a0a;
+  }
+  .films-list-section .container { max-width: 1000px; }
+
+  /* ── Bannière cinématique ──────────────────────────── */
+  .film-row {
+    position: relative; height: 140px; border-radius: 10px;
+    margin-bottom: 14px; overflow: hidden;
+    cursor: default;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .film-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+  }
+  .film-row-bg {
+    position: absolute; inset: 0;
+    background-size: cover; background-position: center 20%;
+    transition: transform 0.5s ease;
+  }
+  .film-row:hover .film-row-bg { transform: scale(1.04); }
+
+  /* Dégradés : gauche pour le texte, droite pour les boutons */
+  .film-row-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(
+      to right,
+      rgba(0,0,0,0.88) 0%,
+      rgba(0,0,0,0.55) 40%,
+      rgba(0,0,0,0.10) 68%,
+      rgba(0,0,0,0.25) 100%
+    );
+  }
+
+  .film-row-content {
+    position: relative; z-index: 2;
+    display: flex; align-items: center;
+    height: 100%; padding: 0 28px;
+    gap: 20px;
+  }
+  .film-info { flex: 1; min-width: 0; }
+  .film-row-genre {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 6px;
+  }
+  .film-row-title {
+    font-family: 'Montserrat', sans-serif; font-size: 22px; font-weight: 900;
+    color: white; letter-spacing: -0.3px; line-height: 1.1;
+    text-transform: uppercase;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.8);
+    /* Soulignement rouge à la Avengers */
+    border-bottom: 3px solid var(--rouge);
+    padding-bottom: 5px; display: inline-block;
+  }
+  .film-row-horaire {
+    margin-top: 10px; font-size: 11px; color: rgba(255,255,255,0.4);
+  }
+
+  .film-row-actions {
+    display: flex; flex-direction: row; gap: 10px;
+    flex-shrink: 0; align-items: center;
+    background: rgba(0,0,0,0.35);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  .btn-acheter {
+    background: var(--orange); color: white;
+    font-weight: 700; font-size: 13px; letter-spacing: 0.3px;
+    padding: 10px 22px; border-radius: 6px; border: none;
+    cursor: pointer; white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-acheter:hover { background: var(--orange-dark); transform: scale(1.02); }
+  .btn-reserver {
+    background: transparent; color: white;
+    font-weight: 600; font-size: 13px;
+    padding: 10px 22px; border-radius: 6px;
+    border: 1.5px solid rgba(255,255,255,0.25);
+    cursor: pointer; white-space: nowrap;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .btn-reserver:hover { border-color: var(--orange); color: var(--orange); background: rgba(255,140,0,0.06); }
+
+  /* ══ MODALS ══════════════════════════════════════════ */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.85); z-index: 2000;
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+  .modal-box {
+    background: #161616; border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; padding: 36px; width: 90%; max-width: 480px;
+    max-height: 90vh; overflow-y: auto;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(20px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+  .modal-step { display: none; }
+  .modal-step.active { display: block; }
+
+  .modal-film-header {
+    display: flex; gap: 14px; align-items: center;
+    background: rgba(255,140,0,0.06); border: 1px solid rgba(255,140,0,0.15);
+    border-radius: 8px; padding: 12px; margin-bottom: 24px;
+  }
+  .modal-film-poster { width: 50px; height: 66px; border-radius: 4px; object-fit: cover; object-position: top; flex-shrink: 0; }
+  .modal-film-info .modal-genre { font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--orange); }
+  .modal-film-info .modal-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; color: white; }
+
+  .modal-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 12px; }
+  .modal-section { margin-bottom: 22px; }
+
+  /* Type label */
+  .modal-type-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; padding: 4px 12px; border-radius: 4px;
+    margin-bottom: 20px;
+  }
+  .modal-type-badge.achat { background: rgba(255,140,0,0.15); color: var(--orange); border: 1px solid rgba(255,140,0,0.3); }
+  .modal-type-badge.reserve { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.6); border: 1px solid rgba(255,255,255,0.15); }
+
+  /* Compteur places */
+  .qty-control { display: flex; align-items: center; gap: 0; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden; width: fit-content; }
+  .qty-btn { background: #222; color: white; border: none; width: 40px; height: 40px; font-size: 18px; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
+  .qty-btn:hover { background: var(--orange); }
+  .qty-display { background: #111; color: white; font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 18px; width: 54px; height: 40px; display: flex; align-items: center; justify-content: center; border-left: 1px solid rgba(255,255,255,0.1); border-right: 1px solid rgba(255,255,255,0.1); }
+
+  .qty-row { display: flex; align-items: center; gap: 20px; }
+  .qty-total-label { font-size: 13px; color: rgba(255,255,255,0.5); }
+  .qty-total-price { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 18px; color: var(--orange); }
+
+  /* Sélecteur jours */
+  .jours-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+  .jour-btn {
+    background: #222; color: rgba(255,255,255,0.5);
+    border: 1.5px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 9px 14px; font-size: 12px; font-weight: 700; letter-spacing: 0.5px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .jour-btn:hover { border-color: rgba(255,140,0,0.4); color: rgba(255,255,255,0.8); }
+  .jour-btn.selected { background: rgba(255,140,0,0.12); border-color: var(--orange); color: var(--orange); }
+  .jour-btn.disabled { opacity: 0.25; cursor: not-allowed; pointer-events: none; }
+
+  .heure-seance {
+    margin-top: 10px; font-size: 12px; font-weight: 600;
+    color: var(--orange); display: none;
+  }
+  .heure-seance span { color: white; }
+
+  /* Note réservation */
+  .reserve-note {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 14px; margin-bottom: 22px;
+    font-size: 12px; color: rgba(255,255,255,0.45); line-height: 1.6;
+  }
+  .reserve-note strong { color: rgba(255,255,255,0.75); }
+
+  .tarifs-panel { display: flex; flex-direction: column; gap: 10px; }
+  .tarif-row {
+    display: flex; align-items: center; justify-content: space-between;
+    background: #1e1e1e; border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 14px 18px;
+    cursor: pointer; transition: border-color 0.2s, background 0.2s;
+  }
+  .tarif-row:hover { border-color: rgba(255,140,0,0.4); }
+  .tarif-row.selected { border-color: var(--orange); background: rgba(255,140,0,0.08); }
+  .tarif-row-label { font-weight: 700; font-size: 14px; color: white; }
+  .tarif-row-label span {
+    display: block; font-size: 10px; font-weight: 500;
+    color: rgba(255,255,255,0.35); letter-spacing: 0.5px;
+    text-transform: uppercase; margin-top: 2px;
+  }
+  .tarif-row-price { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 16px; color: var(--orange); }
+
+  .verif-reminder {
+    display: none; align-items: flex-start; gap: 10px;
+    background: rgba(241,196,15,0.08); border: 1px solid rgba(241,196,15,0.3);
+    border-radius: 8px; padding: 12px 14px; margin-bottom: 20px;
+    font-size: 12px; color: rgba(255,220,140,0.85); line-height: 1.5;
+  }
+
+  /* Boutons modal */
+  .modal-actions { display: flex; gap: 12px; margin-top: 6px; }
+  .btn-modal-cancel { flex: 1; background: transparent; color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; padding: 12px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.15s; }
+  .btn-modal-cancel:hover { border-color: rgba(255,255,255,0.35); color: white; }
+  .btn-modal-confirm { flex: 2; background: var(--orange); color: white; border: none; border-radius: 8px; padding: 12px; font-weight: 700; font-size: 13px; letter-spacing: 0.3px; cursor: pointer; transition: background 0.2s; }
+  .btn-modal-confirm:hover { background: var(--orange-dark); }
+  .btn-modal-confirm:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Paiement */
+  .payment-methods { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 22px; }
+  .pay-method {
+    background: #1e1e1e; border: 2px solid rgba(255,255,255,0.08);
+    border-radius: 10px; padding: 20px 12px; text-align: center;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .pay-method:hover { border-color: rgba(255,140,0,0.4); }
+  .pay-method.selected { border-color: var(--orange); background: rgba(255,140,0,0.08); }
+  .pay-method-icon { height: 36px; margin-bottom: 8px; display: flex; align-items: center; justify-content: center; }
+  .pay-method-icon img { height: 36px; width: auto; object-fit: contain; }
+  .pay-method-name { font-weight: 700; font-size: 13px; color: white; }
+  .pay-method-sub { font-size: 10px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+
+  .phone-row { display: flex; gap: 0; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; overflow: hidden; }
+  .phone-prefix { background: #222; color: rgba(255,255,255,0.6); padding: 12px 16px; font-size: 14px; font-weight: 600; border-right: 1px solid rgba(255,255,255,0.1); white-space: nowrap; }
+  .phone-input { flex: 1; background: #111; color: white; border: none; padding: 12px 16px; font-size: 14px; font-family: 'Inter', sans-serif; outline: none; }
+  .phone-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  /* Récapitulatif paiement */
+  .payment-recap {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px; padding: 14px; margin-bottom: 20px;
+  }
+  .recap-row { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px; color: rgba(255,255,255,0.55); }
+  .recap-row:last-child { margin-bottom: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.07); font-weight: 700; font-size: 15px; color: white; }
+  .recap-row:last-child .recap-val { color: var(--orange); }
+
+  /* Confirmation */
+  .confirm-box { text-align: center; }
+  .confirm-icon { font-size: 52px; margin-bottom: 16px; }
+  .confirm-title { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 22px; color: white; margin-bottom: 8px; }
+  .confirm-sub { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 24px; }
+  .confirm-sub.reserve-sub { color: rgba(255,200,100,0.7); }
+
+  .code-block {
+    background: #0d0d0d; border: 1px solid rgba(255,140,0,0.3);
+    border-radius: 10px; padding: 20px 24px; margin-bottom: 20px;
+    position: relative;
+  }
+  .code-label { font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,140,0,0.6); margin-bottom: 10px; }
+  .code-value {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700;
+    font-size: 22px; color: var(--orange); letter-spacing: 4px;
+    word-break: break-all;
+  }
+  .code-copy {
+    position: absolute; top: 12px; right: 12px;
+    background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.2);
+    color: var(--orange); font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 4px; cursor: pointer;
+    transition: background 0.15s;
+  }
+  .code-copy:hover { background: rgba(255,140,0,0.2); }
+  .code-warning { font-size: 11px; color: rgba(255,255,255,0.3); margin-top: 10px; text-align: center; }
+
+  .confirm-details { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.8; margin-bottom: 24px; }
+  .btn-close-modal { width: 100%; background: var(--orange); color: white; border: none; border-radius: 8px; padding: 14px; font-weight: 700; font-size: 14px; cursor: pointer; transition: background 0.2s; }
+  .btn-close-modal:hover { background: var(--orange-dark); }
+
+  /* ══ ÉTATS CHARGEMENT / ERREUR / VIDE ═══════════════════ */
+  .state-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; width: 100%; text-align: center; padding: 40px 20px;
+    color: rgba(255,255,255,0.4); font-size: 13px;
+  }
+  .state-box .btn-retry {
+    background: rgba(255,140,0,0.12); color: var(--orange);
+    border: 1px solid rgba(255,140,0,0.35); border-radius: 6px;
+    padding: 8px 18px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .state-box .btn-retry:hover { background: rgba(255,140,0,0.22); }
+
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  .skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #232323 37%, #1a1a1a 63%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .film-row-skeleton { border-radius: 10px; height: 140px; margin-bottom: 14px; }
+  @media (max-width: 768px) { .film-row-skeleton { height: 155px; border-radius: 14px; } }
+
+  /* ══ FOOTER ══════════════════════════════════════════ */
+  footer { background: #050505; padding: 40px 0 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .footer-logo { font-family: 'Montserrat',sans-serif; font-weight: 800; font-size: 20px; color: var(--orange); }
+  .footer-tagline { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
+  .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; display: block; margin-bottom: 8px; }
+  .footer-links a:hover { color: var(--orange); }
+  .footer-copy { color: rgba(255,255,255,0.25); font-size: 12px; text-align: center; margin-top: 30px; }
+
+  /* Choix ville */
+  .ville-row { display: flex; gap: 10px; }
+  .ville-btn {
+    background: #222; color: rgba(255,255,255,0.5);
+    border: 1.5px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 10px 18px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; flex: 1; text-align: center;
+  }
+  .ville-btn:hover { border-color: rgba(255,140,0,0.4); color: rgba(255,255,255,0.8); }
+  .ville-btn.selected { background: rgba(255,140,0,0.12); border-color: var(--orange); color: var(--orange); }
+
+  @media (max-width: 1100px) {
+    .nav-center, .nav-right { display: none; }
+    .burger-btn { display: flex; }
+    .navbar { padding: 14px 20px; }
+    .film-row { height: 155px; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+    .film-row-overlay { background: linear-gradient(to right, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.65) 45%, rgba(0,0,0,0.2) 75%, rgba(0,0,0,0.35) 100%); }
+    .film-row-title { font-size: 15px; }
+    .film-row-content { padding: 0 14px; gap: 8px; }
+    .film-row-genre {
+      display: inline-block; font-size: 8px; letter-spacing: 1px;
+      background: rgba(255,140,0,0.18); border: 1px solid rgba(255,140,0,0.4);
+      padding: 2px 8px; border-radius: 4px; margin-bottom: 6px;
+    }
+    .film-row-horaire { display: block; font-size: 10px; margin-top: 6px; }
+    .film-row-actions {
+      flex-direction: column; gap: 6px; padding: 8px;
+    }
+    .btn-acheter, .btn-reserver { font-size: 10.5px; padding: 8px 22px; letter-spacing: 0.3px; white-space: nowrap; min-width: 100px; text-align: center; }
+    .btn-account-icon { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; }
+    .tarifs-row { flex-wrap: nowrap; }
+    .tarif-item { min-width: 0; padding: 10px 4px; }
+    .tarif-item:last-child { border-right: none; }
+    .tarif-label { font-size: 8.5px; line-height: 1.2; margin-bottom: 5px; }
+    .tarif-price { font-size: 12px; }
+    .modal-box { padding: 24px 20px; }
+
+    footer .row { text-align: center; }
+    footer .col-md-4 img { margin-left: auto; margin-right: auto; }
+    footer .footer-links {
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    footer .col-md-4:first-child + .footer-links { border-top: none; padding-top: 0; }
+    footer .footer-links strong { display: block; margin-bottom: 8px; }
+    footer .footer-links a { margin-bottom: 6px; }
+    footer .col-md-4:last-child { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; }
+    .footer-copy { margin-top: 20px; }
+  }
+  /* ══ RIDEAU DE CHARGEMENT ══════════════════════════════ */
+  .page-curtain {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, var(--orange-dark), var(--orange));
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  .page-curtain img { width: 130px; animation: curtainPulse 1.4s ease-in-out infinite; }
+  @keyframes curtainPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.08); opacity: 1; } }
+  .page-curtain.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+  .btn-spinner {
+  display: inline-block; width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.4); border-top-color: white;
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+  margin-right: 8px; vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="page-curtain" id="page-curtain">
+    <img src="images/CParcBGless white.png" alt="Culture Parc">
+  </div>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href=" index.html" class="logo-wrap">
+                <img src="images/CParcBGless white.png" alt="Culture-Parc" class="logo-img">
+            </a>
+        </div>
+        <div class="nav-center">
+            <a href=" index.html">Accueil</a>
+            <a href="programme.html">Programme</a>
+            <a href="market.html" class="active">Market</a>
+            <a href="events.html">Événements</a>
+            <a href="contact.html">Contact</a>
+        </div>
+        <div class="nav-right" id="nav-right"></div>
+        </div>
+        <button class="burger-btn" id="burger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <div class="mobile-menu" id="mobile-menu">
+        <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Fermer">&times;</button>
+        <a href=" index.html">Accueil</a>
+        <a href="programme.html">Programme</a>
+        <a href="market.html" class="active">Market</a>
+        <a href="events.html">Événements</a>
+        <a href="contact.html">Contact</a>
+        <div class="mobile-menu-divider"></div>
+        <div id="mobile-auth-block"></div>
+    </div>
+
+<!-- ═══ TARIFS ════════════════════════════════════════════ -->
+<div class="market-page">
+  <section class="tarifs-header">
+    <div class="container">
+      <h1 class="tarifs-title">Réservez vos places <span>dès maintenant !</span></h1>
+      <div class="tarifs-row">
+        <div class="tarif-item">
+          <div class="tarif-label">Standard / 3D &amp; Nouveauté</div>
+          <div class="tarif-price">2 500 FCFA</div>
+        </div>
+        <div class="tarif-item">
+          <div class="tarif-label">Enfant (3 à 11 ans)</div>
+          <div class="tarif-price">1 000 FCFA</div>
+        </div>
+        <div class="tarif-item">
+          <div class="tarif-label">Étudiant</div>
+          <div class="tarif-price">1 500 FCFA</div>
+        </div>
+        <div class="tarif-item avant-premiere">
+          <div class="tarif-label">Avant-première</div>
+          <div class="tarif-price">5 000 FCFA</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+
+  <!-- ═══ LISTE FILMS ═══════════════════════════════════ -->
+  <section class="films-list-section">
+    <div class="container" id="films-list"></div>
+  </section>
+</div>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <img src="images/CParcBGless white.png" alt="Culture Parc" style="height:90px;width:auto;object-fit:contain;margin-bottom:6px;">
+        <p class="footer-tagline">Le lieu où le cinéma rencontre la scène</p>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Navigation</strong><br><br>
+        <a href=" index.html">Accueil</a>
+        <a href="programme.html">Films</a>
+        <a href="market.html">Market</a>
+        <a href="events.html">Événements</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Compte</strong><br><br>
+        <a href="authentification.html?mode=connexion&next=market.html">Se connecter</a>
+        <a href="authentification.html?mode=inscription&next=market.html">S'inscrire</a>
+        <a href="compte.html">Mon profil</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <strong style="color:white;font-size:13px;">Suivez-nous</strong><br><br>
+        <p style="color:rgba(255,255,255,0.4);font-size:13px;">Pointe-Noire, République du Congo</p>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 Culture Parc. Tous droits réservés.</p>
+  </div>
+</footer>
+
+<!-- ═══ MODAL RÉSERVATION / ACHAT ════════════════════════ -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+
+    <!-- ÉTAPE 1 : Choix places + jour -->
+    <div class="modal-step active" id="step1">
+      <div id="modal-type-badge"></div>
+      <div class="modal-film-header" id="modal-film-header"></div>
+
+      <div class="modal-section">
+        <div class="modal-label">Catégorie de tarif</div>
+        <div class="tarifs-panel" id="tarifs-panel"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Choisissez votre ville</div>
+        <div class="ville-row">
+          <button class="ville-btn" onclick="selectVille('PN','Pointe-Noire', this)">📍 Pointe-Noire</button>
+          <button class="ville-btn" onclick="selectVille('BZ','Brazzaville', this)">📍 Brazzaville</button>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Choisissez le jour</div>
+        <div class="jours-grid" id="jours-grid">
+          <div style="font-size:12px;color:rgba(255,255,255,0.35);">Choisissez d'abord votre ville.</div>
+        </div>
+        <div class="heure-seance" id="heure-seance">🕐 Séance : <span id="heure-seance-val"></span></div>
+        <div id="places-info" style="margin-top:6px;font-size:12px;font-weight:700;"></div>
+      </div>
+
+      <div class="verif-reminder" id="verif-reminder">
+        ⚠️ <span><strong>Rappel :</strong> ce tarif nécessite une vérification (carte étudiant ou pièce justifiant l'âge) sur place, au guichet.</span>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Nombre de places</div>
+        <div class="qty-row">
+          <div class="qty-control">
+            <button class="qty-btn" onclick="changeQty(-1)">−</button>
+            <div class="qty-display" id="qty-display">1</div>
+            <button class="qty-btn" onclick="changeQty(1)">+</button>
+          </div>
+          <div>
+            <div class="qty-total-label">Total à payer</div>
+            <div class="qty-total-price" id="qty-total">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="reserve-note-block" style="display:none">
+        <div class="reserve-note">
+          <strong>Réservation :</strong> vous payez <strong id="reserve-now">0 FCFA</strong> maintenant (50%) et le reste à l'entrée le jour J. Votre place est garantie jusqu'à 15 min avant la séance.
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="closeModal()">Annuler</button>
+        <button class="btn-modal-confirm" id="btn-step1-next" onclick="goStep2()">Continuer →</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 2 : Paiement -->
+    <div class="modal-step" id="step2">
+      <div class="modal-label" style="margin-bottom:16px;">Moyen de paiement</div>
+
+      <div class="payment-recap" id="payment-recap"></div>
+
+      <div class="payment-methods">
+        <div class="pay-method" id="pay-airtel" onclick="selectPayment('airtel')">
+          <div class="pay-method-icon"><img src="images/airtel-money-logo.png" alt="Airtel Money"></div>
+          <div class="pay-method-name">Airtel Money</div>
+          <div class="pay-method-sub">+242 05…</div>
+        </div>
+        <div class="pay-method" id="pay-mobile" onclick="selectPayment('mobile')">
+          <div class="pay-method-icon"><img src="images/mtn-mobile-money-logo.png" alt="Mobile Money"></div>
+          <div class="pay-method-name">Mobile Money</div>
+          <div class="pay-method-sub">+242 06…</div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Numéro de téléphone</div>
+        <div class="phone-row">
+          <span class="phone-prefix">+242</span>
+          <input type="tel" class="phone-input" id="phone-input" placeholder="06 XXX XX XX" maxlength="10">
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-modal-cancel" onclick="goStep1()">← Retour</button>
+        <button class="btn-modal-confirm" id="btn-pay" onclick="processPayment()">Confirmer le paiement</button>
+      </div>
+    </div>
+
+    <!-- ÉTAPE 3 : Confirmation -->
+    <div class="modal-step" id="step3">
+      <div class="confirm-box">
+        <div class="confirm-icon">✅</div>
+        <div class="confirm-title" id="confirm-title">Paiement confirmé !</div>
+        <div class="confirm-sub" id="confirm-sub"></div>
+        <div class="code-block" id="code-block">
+          <div class="code-label">Votre code d'entrée</div>
+          <div class="code-value" id="confirm-code"></div>
+          <button class="code-copy" onclick="copyCode()">Copier</button>
+          <div class="code-warning">⚠️ Conservez ce code précieusement — il ne sera affiché qu'une seule fois.</div>
+        </div>
+        <div class="confirm-details" id="confirm-details"></div>
+        <button class="btn-close-modal" onclick="closeModal()">Parfait, fermer</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const API_BASE = '/api';
+
+
+  function getCookie(name) {
+    const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+    return match ? match.pop() : '';
+  }
+  async function getCsrfToken() {
+    await fetch(`${API_BASE}/tarifs-film/`, { credentials: 'include' });
+    return getCookie('csrftoken');
+  }
+  function fmtMoney(n) { return n.toLocaleString('fr-FR') + ' FCFA'; }
+  function jourDateToAbbrev(jourISO) {
+    const joursAbbrev = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    return joursAbbrev[new Date(jourISO).getDay()];
+  }
+
+  /* ── Données (chargées depuis l'API) ─────────────────── */
+  let films = [];
+  let tarifsFilm = [];
+  const listEl = document.getElementById('films-list');
+
+  function renderListSkeleton() {
+    listEl.innerHTML = Array.from({length: 3}).map(() => `<div class="skeleton film-row-skeleton"></div>`).join('');
+  }
+
+  async function chargerDonnees() {
+    renderListSkeleton();
+    try {
+      const [filmsRes, tarifsRes] = await Promise.all([
+        fetch(`${API_BASE}/films/`),
+        fetch(`${API_BASE}/tarifs-film/`),
+      ]);
+      if (!filmsRes.ok || !tarifsRes.ok) throw new Error('HTTP error');
+      films = await filmsRes.json();
+      tarifsFilm = await tarifsRes.json();
+    } catch (e) {
+      console.error('Erreur chargement market:', e);
+      listEl.innerHTML = `<div class="state-box">⚠️ Impossible de charger les films.<button class="btn-retry" onclick="chargerDonnees().then(restaurerCommandeEnAttente)">Réessayer</button></div>`;
+      return;
+    }
+    renderFilmsList();
+  }
+
+  function renderFilmsList() {
+    listEl.innerHTML = '';
+    if (films.length === 0) {
+      listEl.innerHTML = `<div class="state-box">Aucun film programmé cette semaine.</div>`;
+      return;
+    }
+    films.forEach((f, i) => {
+      const bg = f.poster_paysage || f.poster_portrait || '';
+      const applicables = tarifsFilm.filter(t => t.applicable_a === f.type_tarif);
+      const prixMin = applicables.length ? Math.min(...applicables.map(t => t.prix)) : null;
+      const joursAbbrev = [...new Set((f.seances || []).map(s => jourDateToAbbrev(s.jour)))];
+
+      const row = document.createElement('div');
+      row.className = 'film-row';
+      row.innerHTML = `
+        <div class="film-row-bg" style="background-image:url('${bg}')"></div>
+        <div class="film-row-overlay"></div>
+        <div class="film-row-content">
+          <div class="film-info">
+            <div class="film-row-genre">${f.genre}</div>
+            <div class="film-row-title">${f.titre}</div>
+            <div class="film-row-horaire">📅 ${joursAbbrev.join(' · ') || '—'}${prixMin !== null ? ' &nbsp;·&nbsp; dès ' + fmtMoney(prixMin) : ''}</div>
+          </div>
+          <div class="film-row-actions">
+            <button class="btn-acheter" onclick="openModal(${i},'achat')">Acheter</button>
+            <button class="btn-reserver" onclick="openModal(${i},'reserve')">Réserver</button>
+          </div>
+        </div>
+      `;
+      listEl.appendChild(row);
+    });
+  }
+  chargerDonnees().then(async () => {
+  const params = new URLSearchParams(window.location.search);
+  const openFilmId = params.get('openFilm');
+  const openType = params.get('type');
+  if (openFilmId) {
+    const idx = films.findIndex(f => f.id === +openFilmId);
+    if (idx !== -1) {
+      openModal(idx, openType === 'reserve' ? 'reserve' : 'achat');
+    }
+    // Nettoie l'URL pour éviter la réouverture au refresh
+    window.history.replaceState({}, '', 'market.html');
+  } else {
+    await restaurerCommandeEnAttente();
+  }
+  }).finally(() => {
+    document.getElementById('page-curtain')?.classList.add('hide');
+  });
+
+  function restaurerCommandeEnAttente() {
+    const saved = sessionStorage.getItem('cp_pending_order');
+    if (!saved) return;
+    sessionStorage.removeItem('cp_pending_order');
+
+    let s;
+    try { s = JSON.parse(saved); } catch (e) { return; }
+    const f = films[s.filmIdx];
+    if (!f) return;
+
+    state = s;
+
+    document.getElementById('modal-type-badge').innerHTML = state.type === 'achat'
+      ? `<div class="modal-type-badge achat">🎟 Achat en ligne — paiement intégral</div>`
+      : `<div class="modal-type-badge reserve">📌 Réservation — 50% maintenant</div>`;
+
+    document.getElementById('modal-film-header').innerHTML = `
+      <img class="modal-film-poster" src="${f.poster_portrait || f.poster_paysage || ''}" alt="${f.titre}">
+      <div class="modal-film-info">
+        <div class="modal-genre">${f.genre}</div>
+        <div class="modal-title">${f.titre}</div>
+      </div>
+    `;
+
+    renderTarifs(state.filmIdx);
+    if (state.tarifSel) {
+      const row = document.getElementById(`tarif-opt-${state.tarifSel}`);
+      if (row) row.classList.add('selected');
+      const t = tarifsFilm.find(t => t.id === state.tarifSel);
+      document.getElementById('verif-reminder').style.display = (t && t.necessite_verification) ? 'flex' : 'none';
+    }
+
+    const seanceIdSauvegardee = state.seanceId;
+    buildJoursGrid();
+    state.seanceId = seanceIdSauvegardee;
+    if (state.seanceId) {
+      document.querySelectorAll('.jour-btn').forEach(b => {
+        if (b.textContent === jourDateToAbbrev((f.seances.find(s2 => s2.id === state.seanceId) || {}).jour)) {
+          b.classList.add('selected');
+        }
+      });
+      document.getElementById('heure-seance-val').textContent = `${state.heureSel} (${state.langueSel})`;
+      document.getElementById('heure-seance').style.display = 'block';
+      const seanceObj = f.seances.find(s2 => s2.id === state.seanceId);
+      if (seanceObj) afficherPlacesDispo(seanceObj);
+    }
+    if (state.villeCode) {
+      document.querySelectorAll('.ville-btn').forEach(b => {
+        if (b.textContent.includes(state.villeLabel)) b.classList.add('selected');
+      });
+    }
+
+    document.getElementById('reserve-note-block').style.display = state.type === 'reserve' ? 'block' : 'none';
+    updateQtyDisplay();
+    buildRecap();
+
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    showStep(2);
+  }
+
+  /* ── État modal ───────────────────────────────────────── */
+  let state = {};
+
+  function openModal(idx, type) {
+    const f = films[idx];
+    state = { filmIdx: idx, type, qty: 1, villeCode: null, villeLabel: null, seanceId: null, heureSel: null, langueSel: null, tarifSel: null, tarifPrix: null };
+
+    document.getElementById('modal-type-badge').innerHTML = type === 'achat'
+      ? `<div class="modal-type-badge achat">🎟 Achat en ligne — paiement intégral</div>`
+      : `<div class="modal-type-badge reserve">📌 Réservation — 50% maintenant</div>`;
+
+    document.getElementById('modal-film-header').innerHTML = `
+      <img class="modal-film-poster" src="${f.poster_portrait || f.poster_paysage || ''}" alt="${f.titre}">
+      <div class="modal-film-info">
+        <div class="modal-genre">${f.genre}</div>
+        <div class="modal-title">${f.titre}</div>
+      </div>
+    `;
+
+    renderTarifs(idx);
+    document.querySelectorAll('.ville-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('jours-grid').innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.35);">Choisissez d'abord votre ville.</div>`;
+    document.getElementById('heure-seance').style.display = 'none';
+    document.getElementById('verif-reminder').style.display = 'none';
+    document.getElementById('reserve-note-block').style.display = type === 'reserve' ? 'block' : 'none';
+
+    updateQtyDisplay();
+    showStep(1);
+    document.getElementById('modal').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('modal').addEventListener('click', e => { if (e.target === document.getElementById('modal')) closeModal(); });
+
+  /* ── Tarifs ───────────────────────────────────────────── */
+  function renderTarifs(idx) {
+    const f = films[idx];
+    const enfantInterdit = f.age_minimum && f.age_minimum > 11;
+    const applicables = tarifsFilm.filter(t => t.applicable_a === f.type_tarif && !(enfantInterdit && /enfant/i.test(t.label)));
+    document.getElementById('tarifs-panel').innerHTML = applicables.map(t => `
+      <div class="tarif-row" id="tarif-opt-${t.id}" onclick="selectTarif(${t.id}, ${t.prix}, ${t.necessite_verification})">
+        <div class="tarif-row-label">${t.label}<span>par personne</span></div>
+        <div class="tarif-row-price">${fmtMoney(t.prix)}</div>
+      </div>
+    `).join('');
+  }
+
+  function selectTarif(tarifId, prix, necessiteVerif) {
+    state.tarifSel = tarifId;
+    state.tarifPrix = prix;
+    document.querySelectorAll('.tarif-row').forEach(r => r.classList.remove('selected'));
+    document.getElementById(`tarif-opt-${tarifId}`).classList.add('selected');
+    document.getElementById('verif-reminder').style.display = necessiteVerif ? 'flex' : 'none';
+    updateQtyDisplay();
+  }
+
+  /* ── Ville / Jour ─────────────────────────────────────── */
+  function selectVille(code, label, btn) {
+    state.villeCode = code;
+    state.villeLabel = label;
+    document.querySelectorAll('.ville-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    buildJoursGrid();
+  }
+
+  function buildJoursGrid() {
+    const f = films[state.filmIdx];
+    const grid = document.getElementById('jours-grid');
+    const seancesVille = (f.seances || []).filter(s => s.ville === state.villeCode);
+    state.seanceId = null;
+    document.getElementById('heure-seance').style.display = 'none';
+
+    if (seancesVille.length === 0) {
+      grid.innerHTML = `<div style="font-size:12px;color:rgba(255,255,255,0.35);">Aucune séance à ${state.villeLabel} cette semaine.</div>`;
+      return;
+    }
+    grid.innerHTML = '';
+    seancesVille.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'jour-btn';
+      btn.textContent = jourDateToAbbrev(s.jour);
+      btn.onclick = () => selectJour(s, btn);
+      grid.appendChild(btn);
+    });
+  }
+
+  function selectJour(seance, btn) {
+    state.seanceId = seance.id;
+    state.heureSel = seance.heure.slice(0, 5);
+    state.langueSel = seance.langue;
+    document.querySelectorAll('.jour-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    document.getElementById('heure-seance-val').textContent = `${state.heureSel} (${state.langueSel})`;
+    document.getElementById('heure-seance').style.display = 'block';
+    afficherPlacesDispo(seance);
+  }
+
+  function afficherPlacesDispo(seance) {
+    const dispo = seance.places_totales - seance.places_vendues;
+    const el = document.getElementById('places-info');
+    const qtyBtns = document.querySelectorAll('#step1 .qty-btn');
+    const nextBtn = document.getElementById('btn-step1-next');
+    if (dispo <= 0) {
+      el.textContent = 'Sold Out';
+      el.style.color = 'var(--rouge)';
+      qtyBtns.forEach(b => b.disabled = true);
+      nextBtn.disabled = true;
+      nextBtn.textContent = 'Sold Out';
+    } else {
+      el.textContent = `${dispo} place(s) restante(s)`;
+      el.style.color = dispo <= 10 ? '#f1c40f' : 'rgba(255,255,255,0.5)';
+      qtyBtns.forEach(b => b.disabled = false);
+      nextBtn.disabled = false;
+      nextBtn.textContent = 'Continuer →';
+    }
+  }
+
+  /* ── Étapes ───────────────────────────────────────────── */
+  function showStep(n) {
+    document.querySelectorAll('.modal-step').forEach((s, i) => s.classList.toggle('active', i === n - 1));
+  }
+  function goStep1() { showStep(1); }
+  async function goStep2() {
+    if (!state.tarifSel) { alert('Veuillez choisir une catégorie de tarif.'); return; }
+    if (!state.villeCode) { alert('Veuillez choisir votre ville.'); return; }
+    if (!state.seanceId) { alert('Veuillez choisir un jour de diffusion.'); return; }
+
+    const btn = document.getElementById('btn-step1-next');
+    btn.disabled = true;
+    const meRes = await fetch(`${API_BASE}/me/`, { credentials: 'include' });
+    btn.disabled = false;
+
+    if (!meRes.ok) {
+      sessionStorage.setItem('cp_pending_order', JSON.stringify(state));
+      window.location.href = `authentification.html?mode=connexion&next=market.html`;
+      return;
+    }
+
+    buildRecap();
+    showStep(2);
+  }
+
+  /* ── Quantité ─────────────────────────────────────────── */
+  function changeQty(d) {
+    state.qty = Math.max(1, Math.min(10, state.qty + d));
+    updateQtyDisplay();
+  }
+  function updateQtyDisplay() {
+    document.getElementById('qty-display').textContent = state.qty;
+    if (state.tarifPrix == null) { document.getElementById('qty-total').textContent = '—'; return; }
+    const total = state.qty * state.tarifPrix;
+    const toPay = state.type === 'reserve' ? Math.ceil(total / 2) : total;
+    document.getElementById('qty-total').textContent = fmtMoney(toPay);
+    if (state.type === 'reserve') document.getElementById('reserve-now').textContent = fmtMoney(toPay);
+  }
+
+  /* ── Récap ────────────────────────────────────────────── */
+  function buildRecap() {
+    const f = films[state.filmIdx];
+    const total = state.qty * state.tarifPrix;
+    const toPay = state.type === 'reserve' ? Math.ceil(total / 2) : total;
+    const reste = total - toPay;
+    let rows = `
+      <div class="recap-row"><span>${f.titre}</span><span>${fmtMoney(state.tarifPrix)} × ${state.qty}</span></div>
+      <div class="recap-row"><span>Séance</span><span>${state.heureSel} · ${state.langueSel}</span></div>
+      <div class="recap-row"><span>Ville</span><span>${state.villeLabel}</span></div>
+    `;
+    if (state.type === 'reserve') {
+      rows += `<div class="recap-row"><span>Reste à payer sur place</span><span class="recap-val">${fmtMoney(reste)}</span></div>`;
+    }
+    rows += `<div class="recap-row"><span>${state.type === 'reserve' ? 'À payer maintenant (50%)' : 'Total'}</span><span class="recap-val">${fmtMoney(toPay)}</span></div>`;
+    document.getElementById('payment-recap').innerHTML = rows;
+  }
+
+  /* ── Paiement ─────────────────────────────────────────── */
+  function selectPayment(m) {
+    state.payMethod = m;
+    document.getElementById('pay-airtel').classList.toggle('selected', m === 'airtel');
+    document.getElementById('pay-mobile').classList.toggle('selected', m === 'mobile');
+  }
+
+  async function processPayment() {
+    const phone = document.getElementById('phone-input').value.trim();
+    if (!state.payMethod) { alert('Veuillez sélectionner un moyen de paiement.'); return; }
+    if (phone.length < 8) { alert('Veuillez entrer un numéro de téléphone valide.'); return; }
+
+    const btn = document.getElementById('btn-pay');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spinner"></span>Traitement…';
+
+    try {
+      const csrftoken = await getCsrfToken();
+
+      const commandeRes = await fetch(`${API_BASE}/commandes/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+        body: JSON.stringify({
+          type_objet: 'film',
+          seance: state.seanceId,
+          tarif_film: state.tarifSel,
+          ville: state.villeCode,
+          quantite_places: state.qty,
+        }),
+      });
+      if (!commandeRes.ok) throw new Error(JSON.stringify(await commandeRes.json()));
+      const commande = await commandeRes.json();
+
+      const montantRecu = state.type === 'reserve' ? Math.ceil(commande.montant_total / 2) : commande.montant_total;
+      const csrftoken2 = await getCsrfToken();
+      const payRes = await fetch(`${API_BASE}/commandes/${commande.id}/confirmer-paiement/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+        body: JSON.stringify({ montant_recu: montantRecu }),
+      });
+      if (!payRes.ok) throw new Error(JSON.stringify(await payRes.json()));
+      const data = await payRes.json();
+
+      afficherConfirmation(data, montantRecu);
+    } catch (error) {
+      console.error(error);
+      alert('Erreur lors du paiement : ' + error.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = 'Confirmer le paiement';
+    }
+  }
+  
+
+  function afficherConfirmation(data, montantRecu) {
+    const f = films[state.filmIdx];
+    const total = data.commande.montant_total;
+    const reste = total - montantRecu;
+    const code = data.ticket.jeton_uuid;
+
+    if (state.type === 'achat') {
+      document.getElementById('confirm-title').textContent = 'Paiement confirmé !';
+      document.getElementById('confirm-sub').className = 'confirm-sub';
+      document.getElementById('confirm-sub').textContent = `Vos ${state.qty} place(s) sont confirmées. Présentez ce code à l'entrée.`;
+      document.getElementById('confirm-details').innerHTML = `
+        Film : <strong style="color:white">${f.titre}</strong><br>
+        Ville : <strong style="color:white">${state.villeLabel}</strong> &nbsp;|&nbsp;
+        Séance : <strong style="color:white">${state.heureSel} · ${state.langueSel}</strong><br>
+        Places : <strong style="color:white">${state.qty}</strong> &nbsp;|&nbsp;
+        Payé : <strong style="color:var(--orange)">${fmtMoney(montantRecu)}</strong>
+      `;
+    } else {
+      document.getElementById('confirm-title').textContent = 'Réservation confirmée !';
+      document.getElementById('confirm-sub').className = 'confirm-sub reserve-sub';
+      document.getElementById('confirm-sub').innerHTML = `${fmtMoney(montantRecu)} payés maintenant.<br>Vous devrez régler <strong>${fmtMoney(reste)}</strong> à l'entrée le jour J.`;
+      document.getElementById('confirm-details').innerHTML = `
+        Film : <strong style="color:white">${f.titre}</strong><br>
+        Ville : <strong style="color:white">${state.villeLabel}</strong> &nbsp;|&nbsp;
+        Séance : <strong style="color:white">${state.heureSel} · ${state.langueSel}</strong><br>
+        Places : <strong style="color:white">${state.qty}</strong> &nbsp;|&nbsp;
+        Reste : <strong style="color:var(--orange)">${fmtMoney(reste)}</strong>
+      `;
+    }
+    document.getElementById('confirm-code').textContent = code;
+    showStep(3);
+  }
+
+  function copyCode() {
+    navigator.clipboard.writeText(document.getElementById('confirm-code').textContent)
+      .then(() => { const b = document.querySelector('.code-copy'); b.textContent = 'Copié ✓'; setTimeout(() => b.textContent = 'Copier', 2000); });
+  }
+
+  /* ── Menu burger mobile ───────────────────────────────── */
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('burger-btn');
+    const isOpen = menu.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+
+  async function verifierAccesCompte() {
+    const navRight = document.getElementById('nav-right');
+    const mobileAuth = document.getElementById('mobile-auth-block');
+    const PAGE = 'market.html';
+    try {
+      const res = await fetch(`${API_BASE}/me/`, { credentials: 'include' });
+      if (res.ok) {
+        navRight.innerHTML = `<a href="compte.html" class="btn-account"><img src="images/icone-compte.png" alt="Mon compte" class="btn-account-icon"></a>`;
+        mobileAuth.innerHTML = `<a href="compte.html">Mon compte</a>`;
+      } else {
+        navRight.innerHTML = `
+          <a href="authentification.html?mode=connexion&next=${PAGE}" class="btn-login">Se connecter</a>
+          <a href="authentification.html?mode=inscription&next=${PAGE}" class="btn-register">S'inscrire</a>`;
+        mobileAuth.innerHTML = `
+          <a href="authentification.html?mode=connexion&next=${PAGE}" class="btn-login">Se connecter</a>
+          <a href="authentification.html?mode=inscription&next=${PAGE}" class="btn-register">S'inscrire</a>`;
+      }
+    } catch (e) {
+      console.error('Erreur vérification session:', e);
+    }
+  }
+  verifierAccesCompte();
+</script>
+</body>
+</html>

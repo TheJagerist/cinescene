@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <script src="mock-api.js"></script>
+  <script src="tutorial-guide.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Culture Parc – Espace Membre</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0a;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background-image: radial-gradient(ellipse at 50% 50%, rgba(255,140,0,0.06) 0%, transparent 70%);
+  }
+
+  /* ── Cadre principal fixe ─── */
+  .scene {
+    width: 760px;
+    max-width: 96vw;
+    height: 550px;
+    position: relative;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.7);
+    background: #161616;
+  }
+
+  /* ── Le panneau Logo qui va "morpher" (Gauche par défaut) ─── */
+  .panel-logo {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 40%;
+    left: 0;
+    background: linear-gradient(155deg, rgba(255,106,0,0.14) 0%, #1a1a1a 60%, #111 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 24px;
+    z-index: 3;
+    /* La transition magique pour le déplacement linéaire */
+    transition: transform 0.6s cubic-bezier(0.5, 1, 0.89, 1), background 0.6s;
+  }
+
+  /* ── Le panneau Formulaire (Droite par défaut) ─── */
+  .panel-form {
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 60%;
+    right: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 40px;
+    transition: transform 0.6s cubic-bezier(0.5, 1, 0.89, 1);
+    overflow-y: auto;
+  }
+
+  /* ── ÉTAT CONNEXION (Inversion des places) ─── */
+  /* Le logo passe à droite : sa largeur est de 40%, il doit bouger de 150% de sa taille pour atteindre la droite (40% * 1.5 = 60% d'espace laissé à gauche) */
+  .scene.mode-connexion .panel-logo {
+    transform: translateX(150%);
+    background: linear-gradient(155deg, #111 0%, #1a1a1a 40%, rgba(255,106,0,0.14) 100%);
+  }
+
+  /* Le formulaire passe à gauche : sa largeur est de 60%, il recule de 66.66% de sa propre taille pour s'aligner à gauche */
+  .scene.mode-connexion .panel-form {
+    transform: translateX(-66.66%);
+  }
+
+  /* ── Éléments du Logo ─── */
+  .logo-img {
+    width: 190px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 24px rgba(255,140,0,0.2));
+  }
+  .logo-tagline {
+    font-family: 'Fredoka One', cursive;
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    text-align: center;
+    line-height: 1.4;
+  }
+  .logo-divider {
+    width: 30px; height: 2px;
+    background: var(--orange);
+    border-radius: 2px;
+  }
+
+  /* ── Gestion de la transition textuelle (Fondu) ─── */
+  .view-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+  }
+
+  .form-view {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    opacity: 1;
+    pointer-events: all;
+    transition: opacity 0.3s ease, transform 0.4s ease;
+  }
+
+  /* Cache la vue inactive */
+  .form-view.hidden {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.96);
+  }
+
+  /* ── Style du Formulaire commun ─── */
+  .form-eyebrow {
+    font-size: 9px; font-weight: 700; letter-spacing: 2px;
+    text-transform: uppercase; color: var(--orange);
+    margin-bottom: 4px;
+  }
+  .form-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 28px;
+    color: white;
+    margin-bottom: 2px;
+    line-height: 1.1;
+  }
+  .form-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.38);
+    margin-bottom: 16px;
+  }
+
+  .fields-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .field { margin-bottom: 10px; }
+  .field label {
+    display: block; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.8px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); margin-bottom: 4px;
+  }
+  .field input {
+    width: 100%; background: #1e1e1e;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 6px;
+    padding: 8px 12px; font-size: 13px; color: white;
+    outline: none; transition: border-color 0.2s, background 0.2s;
+  }
+  .field input:focus { border-color: rgba(255,140,0,0.5); background: #222; }
+  .field input::placeholder { color: rgba(255,255,255,0.18); }
+
+  .pwd-wrap { position: relative; }
+  .pwd-wrap input { padding-right: 70px; }
+  .pwd-toggle {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    font-size: 10px; font-weight: 700; color: rgba(255,140,0,0.65); padding: 0;
+  }
+
+  .forgot-row { display: flex; justify-content: flex-end; margin-top: -4px; margin-bottom: 12px; }
+  .forgot-link { font-size: 11px; color: rgba(255,140,0,0.6); text-decoration: none; }
+
+  .pwd-strength { display: flex; gap: 4px; margin-top: 4px; }
+  .strength-bar { flex: 1; height: 3px; border-radius: 2px; background: rgba(255,255,255,0.08); }
+  .strength-label { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 2px; min-height: 12px; }
+
+  .btn-submit {
+    width: 100%; background: var(--orange); color: white;
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 13px;
+    padding: 10px; border-radius: 6px; border: none; cursor: pointer;
+    box-shadow: 0 2px 14px rgba(255,140,0,0.3); transition: background 0.2s, transform 0.1s;
+    margin-top: 4px; margin-bottom: 12px;
+  }
+  .btn-submit:hover { background: var(--orange-dark); transform: translateY(-1px); }
+
+  .switch-link { font-size: 12px; color: rgba(255,255,255,0.38); text-align: center; }
+  .switch-link a { color: var(--orange); font-weight: 600; text-decoration: none; cursor: pointer; }
+  .switch-link a:hover { color: white; }
+
+  .form-message { font-size: 12px; text-align: center; min-height: 16px; margin-bottom: 4px; }
+
+  @media (max-width: 640px) {
+    body {
+      overflow-y: auto;
+      align-items: flex-start;
+      padding: 30px 0;
+      min-height: 100vh;
+      height: auto;
+    }
+    .panel-logo { display: none; }
+    .panel-form {
+      position: static;
+      width: 100%;
+      padding: 24px 20px;
+    }
+    .scene.mode-connexion .panel-form { transform: none; }
+    .scene { height: auto; border-radius: 0; overflow: visible; }
+    .view-wrapper { height: auto; }
+    .form-view {
+      position: static;
+      inset: auto;
+      opacity: 1;
+      pointer-events: all;
+      transform: none;
+    }
+    .form-view.hidden { display: none; }
+    .fields-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="scene" id="auth-scene">
+
+  <div class="panel-logo">
+    <img src="images/CParcBGless white.png" alt="Culture Parc" class="logo-img">
+    <div class="logo-divider"></div>
+    <div class="logo-tagline">Le lieu où le cinéma<br>rencontre la scène</div>
+  </div>
+
+  <div class="panel-form">
+    <div class="view-wrapper">
+
+      <div class="form-view" id="view-inscription">
+        <div class="form-eyebrow">Rejoignez-nous</div>
+        <div class="form-title">Inscription</div>
+        <p class="form-sub">Créez votre compte Culture Parc gratuitement</p>
+
+        <form id="form-inscription" novalidate>
+          <div class="fields-row">
+            <div class="field">
+              <label for="ins-prenom">Prénom</label>
+              <input type="text" id="ins-prenom" placeholder="Jean">
+            </div>
+            <div class="field">
+              <label for="ins-nom">Nom</label>
+              <input type="text" id="ins-nom" placeholder="Dupont">
+            </div>
+          </div>
+          <div class="field">
+            <label for="ins-username">Nom d'utilisateur</label>
+            <input type="text" id="ins-username" placeholder="jean.dupont">
+          </div>
+          <div class="field">
+            <label for="ins-email">Adresse e-mail</label>
+            <input type="email" id="ins-email" placeholder="exemple@email.com">
+          </div>
+          <div class="field">
+            <label for="ins-tel">Téléphone (optionnel)</label>
+            <input type="tel" id="ins-tel" placeholder="+242 06 XXX XX XX">
+          </div>
+          <div class="field">
+            <label for="ins-pwd">Mot de passe</label>
+            <div class="pwd-wrap">
+              <input type="password" id="ins-pwd" placeholder="••••••••" oninput="checkStrength(this.value)">
+              <button type="button" class="pwd-toggle" onclick="togglePwd('ins-pwd', this)">Afficher</button>
+            </div>
+            <div class="pwd-strength">
+              <div class="strength-bar" id="bar1"></div>
+              <div class="strength-bar" id="bar2"></div>
+              <div class="strength-bar" id="bar3"></div>
+              <div class="strength-bar" id="bar4"></div>
+            </div>
+            <div class="strength-label" id="strength-label"></div>
+          </div>
+          <div class="form-message" id="ins-message"></div>
+          <button type="submit" class="btn-submit">Créer mon compte</button>
+        </form>
+
+        <div class="switch-link">
+          Déjà un compte ? <a onclick="toggleMode('connexion')">Se connecter</a>
+        </div>
+      </div>
+
+      <div class="form-view hidden" id="view-connexion">
+        <div class="form-eyebrow">Bienvenue</div>
+        <div class="form-title">Connexion</div>
+        <p class="form-sub">Accédez à votre espace Culture Parc</p>
+
+        <form id="form-connexion" novalidate>
+         <div class="field">
+            <label for="con-username">Nom d'utilisateur</label>
+            <input type="text" id="con-username" placeholder="jean.dupont">
+          </div>
+          <div class="field">
+            <label for="con-pwd">Mot de passe</label>
+            <div class="pwd-wrap">
+              <input type="password" id="con-pwd" placeholder="••••••••">
+              <button type="button" class="pwd-toggle" onclick="togglePwd('con-pwd', this)">Afficher</button>
+            </div>
+          </div>
+          <div class="forgot-row">
+            <a href="#" class="forgot-link">Mot de passe oublié ?</a>
+          </div>
+          <div class="form-message" id="con-message"></div>
+          <button type="submit" class="btn-submit">Se connecter</button>
+        </form>
+
+        <div class="switch-link">
+          Pas encore de compte ? <a onclick="toggleMode('inscription')">S'inscrire</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const API_BASE = '/api';
+
+
+function getCookie(name) {
+  const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return match ? match.pop() : '';
+}
+async function getCsrfToken() {
+  await fetch(`${API_BASE}/tarifs-film/`, { credentials: 'include' });
+  return getCookie('csrftoken');
+}
+
+/* ── Bascule Morph entre Inscription et Connexion ─── */
+function toggleMode(mode) {
+  const scene = document.getElementById('auth-scene');
+  const viewInscription = document.getElementById('view-inscription');
+  const viewConnexion = document.getElementById('view-connexion');
+
+  if (mode === 'connexion') {
+    scene.classList.add('mode-connexion');
+    viewInscription.classList.add('hidden');
+    setTimeout(() => viewConnexion.classList.remove('hidden'), 200);
+  } else {
+    scene.classList.remove('mode-connexion');
+    viewConnexion.classList.add('hidden');
+    setTimeout(() => viewInscription.classList.remove('hidden'), 200);
+  }
+}
+
+/* ── Toggle mot de passe ─── */
+function togglePwd(inputId, btn) {
+  const input = document.getElementById(inputId);
+  if (input.type === 'password') { input.type = 'text'; btn.textContent = 'Masquer'; }
+  else { input.type = 'password'; btn.textContent = 'Afficher'; }
+}
+
+/* ── Force du mot de passe ─── */
+function checkStrength(val) {
+  let score = 0;
+  if (val.length >= 8) score++;
+  if (/[A-Z]/.test(val)) score++;
+  if (/[0-9]/.test(val)) score++;
+  if (/[^A-Za-z0-9]/.test(val)) score++;
+
+  const colors = ['#c0392b', '#e67e22', '#f1c40f', '#27ae60'];
+  const labels = ['Trop court', 'Faible', 'Moyen', 'Fort'];
+  const labelEl = document.getElementById('strength-label');
+
+  for (let i = 1; i <= 4; i++) {
+    const bar = document.getElementById('bar' + i);
+    bar.style.background = i <= score ? colors[score - 1] : 'rgba(255,255,255,0.08)';
+  }
+  labelEl.textContent = val.length > 0 ? labels[score - 1] || '' : '';
+  labelEl.style.color = score > 0 ? colors[score - 1] : 'rgba(255,255,255,0.3)';
+}
+
+/* ── Récupération de ?mode= et ?next= ─── */
+const params = new URLSearchParams(window.location.search);
+const modeParam = params.get('mode');
+const nextUrl = params.get('next') || 'index.html';
+if (modeParam === 'connexion') toggleMode('connexion');
+
+/* ── Affichage des erreurs DRF (dict de listes) ─── */
+function formatErreurs(data) {
+  if (typeof data === 'string') return data;
+  if (data.erreur) return data.erreur;
+  return Object.entries(data).map(([champ, msgs]) => `${champ} : ${Array.isArray(msgs) ? msgs.join(' ') : msgs}`).join(' | ');
+}
+
+/* ── Inscription ─── */
+document.getElementById('form-inscription').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const prenom = document.getElementById('ins-prenom').value.trim();
+  const nom = document.getElementById('ins-nom').value.trim();
+  const username = document.getElementById('ins-username').value.trim();
+  const email = document.getElementById('ins-email').value.trim();
+  const telephone = document.getElementById('ins-tel').value.trim();
+  const pwd = document.getElementById('ins-pwd').value;
+  const msg = document.getElementById('ins-message');
+
+  if (!prenom || !nom || !username || !email || !pwd) {
+    msg.style.color = '#ffaaaa'; msg.textContent = 'Champs obligatoires manquants.'; return;
+  }
+
+  msg.style.color = 'rgba(255,255,255,0.6)'; msg.textContent = 'Création…';
+
+  try {
+    const csrftoken = await getCsrfToken();
+    const response = await fetch(`${API_BASE}/auth/inscription/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+      body: JSON.stringify({ username, first_name: prenom, last_name: nom, email, telephone, password: pwd }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      msg.style.color = '#ffaaaa'; msg.textContent = formatErreurs(data); return;
+    }
+
+    // Auto-connexion après inscription réussie
+    msg.textContent = 'Connexion…';
+    const csrftoken2 = await getCsrfToken();
+    const loginResp = await fetch(`${API_BASE}/auth/connexion/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+      body: JSON.stringify({ username, password: pwd }),
+    });
+
+    if (loginResp.ok) {
+      window.location.href = nextUrl;
+    } else {
+      msg.style.color = '#ffaaaa';
+      msg.textContent = 'Compte créé, mais connexion automatique échouée. Connectez-vous manuellement.';
+    }
+  } catch (error) {
+    msg.style.color = '#ffaaaa'; msg.textContent = 'Impossible de contacter le serveur.';
+  }
+});
+
+/* ── Connexion ─── */
+document.getElementById('form-connexion').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const username = document.getElementById('con-username').value.trim();
+  const pwd = document.getElementById('con-pwd').value;
+  const msg = document.getElementById('con-message');
+
+  if (!username || !pwd) {
+    msg.style.color = '#ffaaaa'; msg.textContent = 'Veuillez remplir les champs.'; return;
+  }
+
+  msg.style.color = 'rgba(255,255,255,0.6)'; msg.textContent = 'Connexion…';
+
+  try {
+    const csrftoken = await getCsrfToken();
+    const response = await fetch(`${API_BASE}/auth/connexion/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+      body: JSON.stringify({ username, password: pwd }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      msg.style.color = '#ffaaaa'; msg.textContent = formatErreurs(data); return;
+    }
+    window.location.href = nextUrl;
+  } catch (error) {
+    msg.style.color = '#ffaaaa'; msg.textContent = 'Impossible de contacter le serveur.';
+  }
+});
+</script>
+</body>
+</html>
