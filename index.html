@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CinéScène</title>
+<script src="mock-api.js"></script>
+<script src="icons.js"></script>
+<script src="tutorial-guide.js"></script>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+    --gris-dark: #1a1a1a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+
+    /* ══ NAVBAR ══════════════════════════════════════════ */
+    .navbar {
+        position: fixed;
+        width: 100%;
+        padding: 18px 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 999;
+        background: linear-gradient(135deg,rgba(0,0,0,0.55),rgba(26,26,26,0.45),rgba(255,106,0,0.35));
+        backdrop-filter: blur(7px);
+    }
+
+    .nav-left {
+        display: flex;
+        align-items: center;
+    }
+
+    .logo-wrap {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+    }
+    .logo-img {
+        height: 42px;
+        width: auto;
+        object-fit: contain;
+    }
+
+    .nav-center {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+
+        .nav-center a {
+            font-size: 14.5px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            transition: background 0.15s, color 0.15s;
+        }
+
+            .nav-center a:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .nav-center a.active {
+                background: rgba(255,140,0,0.18);
+                color: var(--orange);
+                box-shadow: 0 0 0 1px rgba(255,140,0,0.25);
+            }
+
+    .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Bouton Se connecter */
+    .btn-login {
+        background: var(--orange);
+        color: white;
+        font-weight: 700;
+        font-size: 14px;
+        padding: 9px 22px;
+        border-radius: 8px;
+        border: none;
+        text-decoration: none;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        box-shadow: 0 2px 12px rgba(255,140,0,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+        transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    }
+    
+        .btn-login:hover {
+            background: var(--orange-dark);
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 18px rgba(255,140,0,0.45);
+        }
+
+    /* Bouton S'inscrire */
+    .btn-register {
+        background: rgba(255,255,255,0.08);
+        color: rgba(255,255,255,0.9);
+        font-weight: 700;
+        font-size: 14px;
+        padding: 9px 22px;
+        border-radius: 8px;
+        border: 1.5px solid rgba(255,255,255,0.2);
+        text-decoration: none;
+        cursor: pointer;
+        letter-spacing: 0.3px;
+        backdrop-filter: blur(4px);
+        transition: background 0.2s, border-color 0.2s, transform 0.1s;
+    }
+
+        .btn-register:hover {
+            background: rgba(255,255,255,0.16);
+            border-color: rgba(255,255,255,0.4);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+  /* ══ BURGER MOBILE ════════════════════════════════════ */
+  .burger-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 0;
+  }
+  .burger-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+  }
+  .burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .burger-btn.open span:nth-child(2) { opacity: 0; }
+  .burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  .mobile-menu {
+    position: fixed;
+    inset: 0;
+    background: rgba(10,10,10,0.97);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .mobile-menu.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .mobile-menu a {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    text-decoration: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    transition: background 0.15s, color 0.15s;
+  }
+  .mobile-menu a:hover,
+  .mobile-menu a.active {
+    background: rgba(255,140,0,0.15);
+    color: var(--orange);
+  }
+  .mobile-menu .mobile-menu-divider {
+    width: 60px;
+    height: 1px;
+    background: rgba(255,255,255,0.15);
+    margin: 10px 0;
+  }
+  .mobile-menu .btn-login,
+  .mobile-menu .btn-register {
+    width: 200px;
+    text-align: center;
+  }
+  .mobile-menu-close {
+    position: absolute;
+    top: 22px;
+    right: 24px;
+    width: 38px;
+    height: 38px;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+  }
+
+ @media (max-width: 1100px) {
+    
+    .nav-center, .nav-right { display: none; }
+    .burger-btn { display: flex; }
+    .navbar { padding: 14px 20px; }
+
+    /* Hero mobile */
+    .hero { height: 78vh; min-height: 460px; }
+    .slide-content { left: 5%; right: 5%; max-width: none; bottom: 10%; text-align: center; }
+    .slide-title { font-size: 26px; }
+    .slide-synopsis {
+      font-size: 12px; line-height: 1.5;
+      overflow: visible; margin-bottom: 16px;
+    }
+    .slide-genre { display: inline-block; }
+    .slide-btns { justify-content: center; }
+    .slide-btns .btn-horaires { padding: 12px 24px; font-size: 12.5px; }
+    .carousel-indicators-custom { bottom: 4%; left: 5%; }
+    .arrow { width: 36px; height: 36px; font-size: 15px; }
+
+    /* Section films mobile — style carrousel appli streaming */
+    .section-films { padding: 32px 0 50px; }
+    .section-header { text-align: left; padding: 0 20px; margin-bottom: 20px; }
+    .section-title { font-size: 20px; }
+
+    #films-grid {
+      display: flex; flex-wrap: nowrap; overflow-x: auto;
+      gap: 14px; padding: 0 20px 10px;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    }
+    #films-grid::-webkit-scrollbar { display: none; }
+    #films-grid > div {
+      flex: 0 0 auto; width: 52vw; max-width: 220px;
+      scroll-snap-align: start;
+    }
+    .film-card img { height: 210px; }
+    .film-card-body { padding: 12px 14px; }
+    .film-card-title { font-size: 12.5px; }
+    .film-card-footer { padding: 10px 14px; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .film-horaire { font-size: 10px; }
+  }
+
+  /* ══ HERO CAROUSEL ═══════════════════════════════════ */
+  .hero {
+    position: relative; width: 100%; height: 100vh;
+    min-height: 520px; overflow: hidden;
+  }
+  .slide {
+    position: absolute; width: 100%; height: 100%;
+    opacity: 0; transform: translateX(100%);
+    /* pas de transition par défaut, gérée en JS */
+  }
+  .slide.active {
+    opacity: 1; transform: translateX(0);
+  }
+  .slide-bg {
+    width: 100%; height: 100%; object-fit: cover;
+    filter: brightness(0.75);
+    object-position: top center;
+  }
+  .slide-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
+  }
+  
+  .slide-content {
+    position: absolute; bottom: 15%; left: 6%;
+    max-width: 520px;
+  }
+  .slide-genre {
+    display: inline-block;
+    background: var(--orange); color: white;
+    font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 4px 12px; border-radius: 4px;
+    margin-bottom: 14px;
+  }
+  .slide-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(28px, 4vw, 52px);
+    font-weight: 900; line-height: 1.05;
+    color: white; margin-bottom: 14px;
+    text-shadow: 0 2px 20px rgba(0,0,0,0.5);
+    letter-spacing: -0.5px;
+  }
+  .slide-synopsis {
+    font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.82);
+    margin-bottom: 22px; max-width: 440px;
+  }
+  .slide-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+
+  .btn-horaires {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    color: white; font-weight: 600; font-size: 14px;
+    padding: 14px 60px; border-radius: 18px;
+    border: none; font-family: inherit;
+    cursor: pointer; text-decoration: none;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-horaires:hover { background: rgba(255,255,255,0.25); color: white; }
+  .btn-horaires.btn-achat-hero {
+    background: var(--orange);
+    box-shadow: 0 2px 12px rgba(255,140,0,0.35);
+  }
+  .btn-horaires.btn-achat-hero:hover { background: var(--orange-dark); }
+
+  /* Indicateurs */
+  .carousel-indicators-custom {
+    position: absolute; bottom: 6%; left: 6%;
+    display: flex; gap: 8px; z-index: 10;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.4); cursor: pointer;
+    transition: width 0.35s ease, background 0.3s;
+    border: none;
+    flex-shrink: 0;
+  }
+  .dot.active { background: var(--orange); width: 26px; }
+  @media (prefers-reduced-motion: reduce) {
+    .dot { transition: none; }
+  }
+
+  /* Flèches */
+  .arrow {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: rgba(0,0,0,0.5); color: white;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    width: 46px; height: 46px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; z-index: 10;
+    transition: background 0.2s; backdrop-filter: blur(4px);
+  }
+  .arrow:hover { background: var(--orange); border-color: var(--orange); }
+  .arrow-left { left: 2%; }
+  .arrow-right { right: 2%; }
+
+  /* ══ SECTION FILMS GRILLE ════════════════════════════ */
+  .section-films {
+    background: #111; padding: 60px 0 80px;
+  }
+  .section-header {
+    text-align: center; margin-bottom: 48px;
+  }
+  .section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: clamp(22px, 3vw, 36px); font-weight: 800;
+    color: white; letter-spacing: -0.5px; margin-bottom: 8px;
+  }
+  .section-sub { color: rgba(255,255,255,0.5); font-size: 14px; }
+
+  .film-card {
+    background: #1a1a1a; border-radius: 10px; overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+    cursor: pointer; height: 100%;
+  }
+  .film-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 32px rgba(0,0,0,0.55);
+    outline: 1px solid rgba(255,140,0,0.35);
+  }
+  .film-card img {
+    width: 100%; height: 280px;
+    object-fit: cover; object-position: top;
+    transition: filter 0.3s;
+  }
+  .film-card:hover img { filter: brightness(1.1); }
+  .film-card-body { padding: 16px 18px; }
+  .film-card-genre {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--orange); margin-bottom: 6px;
+  }
+  .film-card-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px; font-weight: 800;
+    color: white; margin-bottom: 8px; line-height: 1.3;
+  }
+  .film-badge {
+  position: absolute; top: 10px; right: 10px; z-index: 5;
+  font-size: 10px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 4px; color: white;
+}
+.film-badge.nouveau { background: var(--orange); }
+.film-badge.premiere { background: #c0392b; }
+.film-badge.age { background: #111; border: 1px solid rgba(255,255,255,0.25); }
+  .film-card-footer {
+    padding: 12px 18px; border-top: 1px solid rgba(255,255,255,0.07);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+
+  
+
+  .film-horaire {
+    font-size: 11px; color: rgba(255,255,255,0.4);
+  }
+
+  /* ══ ÉTATS CHARGEMENT / ERREUR / VIDE ═══════════════════ */
+  .state-box {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 14px; width: 100%; text-align: center; padding: 40px 20px;
+    color: rgba(255,255,255,0.4); font-size: 13px;
+  }
+  .state-box .btn-retry {
+    background: rgba(255,140,0,0.12); color: var(--orange);
+    border: 1px solid rgba(255,140,0,0.35); border-radius: 6px;
+    padding: 8px 18px; font-size: 12.5px; font-weight: 700;
+    cursor: pointer; transition: background 0.2s;
+  }
+  .state-box .btn-retry:hover { background: rgba(255,140,0,0.22); }
+
+  @keyframes shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  .skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #232323 37%, #1a1a1a 63%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  .hero-skeleton { position: absolute; inset: 0; }
+  .grid-skeleton-card { border-radius: 10px; height: 340px; }
+
+  /* ══ FOOTER ══════════════════════════════════════════ */
+  footer {
+    background: #050505; padding: 40px 0 20px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .footer-tagline { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
+  .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; display: block; margin-bottom: 8px; }
+  .footer-links a:hover { color: var(--orange); }
+  .footer-copy { color: rgba(255,255,255,0.25); font-size: 12px; text-align: center; margin-top: 30px; }
+
+  /* ══ TOOLTIP SYNOPSIS ══════════════════════════════════ */
+  .film-card { position: relative; }
+
+  .card-tooltip {
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(20,10,0,0.96) 0%, rgba(180,80,0,0.92) 100%);
+    border: 1px solid rgba(255,140,0,0.45);
+    border-radius: 10px;
+    padding: 22px 20px;
+    display: flex; flex-direction: column; justify-content: center; gap: 14px;
+    opacity: 0; pointer-events: none;
+    transform: scale(0.97);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 10;
+    overflow: hidden;
+  }
+
+  .film-card:hover .card-tooltip {
+    opacity: 1; pointer-events: none; transform: scale(1);
+  }
+
+  .tooltip-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900; font-size: 13px;
+    color: white; text-transform: uppercase;
+    letter-spacing: 0.3px; line-height: 1.2;
+    border-bottom: 2px solid rgba(255,140,0,0.5);
+    padding-bottom: 10px;
+  }
+
+  .tooltip-synopsis {
+    font-size: 12.5px; color: rgba(255,255,255,0.88);
+    line-height: 1.65; flex: 1;
+  }
+
+  .tooltip-acteurs {
+    font-size: 11px; color: rgba(255,220,140,0.75);
+    line-height: 1.55;
+  }
+  .tooltip-acteurs strong {
+    color: rgba(255,200,80,1);
+    font-size: 9px; letter-spacing: 1.5px;
+    text-transform: uppercase; display: block;
+    margin-bottom: 4px;
+  }
+
+  
+  @media (prefers-reduced-motion: reduce) {
+    .card-tooltip { transition: none; }
+  }
+  /* Désactiver sur mobile */
+  @media (max-width: 1100px) {
+    .card-tooltip { display: none; }
+    footer .row { text-align: center; }
+    footer .col-md-4 img { margin-left: auto; margin-right: auto; }
+    footer .footer-links {
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    footer .col-md-4:first-child + .footer-links { border-top: none; padding-top: 0; }
+    footer .footer-links strong { display: block; margin-bottom: 8px; }
+    footer .footer-links a { margin-bottom: 6px; }
+    footer .col-md-4:last-child { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; }
+    .footer-copy { margin-top: 20px; }
+    }
+    .card-clone-overlay {
+    position: fixed; z-index: 5000; overflow: hidden;
+    border-radius: 10px; box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    transition: all 0.42s cubic-bezier(.4,0,.2,1);
+    background: #1a1a1a;
+  }
+  .card-clone-overlay img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .page-fade-overlay {
+    position: fixed; inset: 0; background: #0a0a0a; opacity: 0; z-index: 4999;
+    pointer-events: none; transition: opacity 0.42s ease;
+  }
+    /* ══ RIDEAU DE CHARGEMENT ══════════════════════════════ */
+  .page-curtain {
+    position: fixed; inset: 0; z-index: 9999;
+    background: linear-gradient(135deg, var(--orange-dark), var(--orange));
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s ease;
+  }
+  
+  .page-curtain img { width: 130px; animation: curtainPulse 1.4s ease-in-out infinite; }
+  @keyframes curtainPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.08); opacity: 1; } }
+  .page-curtain.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+</style>
+</head>
+<body>
+  
+  <div class="page-curtain" id="page-curtain">
+    <img src="images/logo.png" alt="CinéScène">
+  </div>
+ <nav class="navbar">
+     <div class="nav-left">
+         <a href="index.html" class="logo-wrap">
+             <img src="images/logo.png" alt="CinéScène" class="logo-img">
+         </a>
+     </div>
+     <div class="nav-center">
+         <a href="index.html" class="active">Accueil</a>
+         <a href="programme.html">Programme</a>
+         <a href="market.html">Market</a>
+         <a href="events.html">Événements</a>
+         <a href="contact.html">Contact</a>
+     </div>
+     <div class="nav-right" id="nav-right"></div>
+     <button class="burger-btn" id="burger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+         <span></span><span></span><span></span>
+     </button>
+ </nav>
+
+ <div class="mobile-menu" id="mobile-menu">
+     <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Fermer">&times;</button>
+     <a href="index.html" class="active">Accueil</a>
+     <a href="programme.html">Programme</a>
+     <a href="market.html">Market</a>
+     <a href="events.html">Événements</a>
+     <a href="contact.html">Contact</a>
+     <div class="mobile-menu-divider"></div>
+     <div id="mobile-auth-block"></div>
+ </div>
+
+<!-- ═══ HERO CAROUSEL ════════════════════════════════════ -->
+<section class="hero" id="hero">
+  <div id="slides-container"></div>
+  <button class="arrow arrow-left" onclick="prevSlide()">&#8249;</button>
+  <button class="arrow arrow-right" onclick="nextSlide()">&#8250;</button>
+
+  <div class="carousel-indicators-custom" id="dots"></div>
+</section>
+
+
+ <!-- ═══ PROGRAMME DE LA SEMAINE ══════════════════════════ -->
+<section class="section-films">
+  <div class="container">
+    <div class="section-header">
+          <h2 class="section-title">Découvrez les films de la semaine</h2>
+      <p class="section-sub" id="section-sub-semaine">Chargement…</p>
+    </div>
+    <div class="row g-4" id="films-grid"></div>
+  </div>
+</section>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <img src="images/logo.png" alt="CinéScène" style="height:90px;width:auto;object-fit:contain;margin-bottom:6px;">
+        <p class="footer-tagline">Le lieu où le cinéma rencontre la scène</p>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Navigation</strong><br><br>
+        <a href="index.html">Accueil</a>
+        <a href="programme.html">Programme</a>
+        <a href="market.html">Market</a>
+        <a href="events.html">Événements</a>
+        <a href="contact.html">Contact</a>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Compte</strong><br><br>
+        <a href="authentification.html?mode=connexion&next=index.html">Se connecter</a>
+        <a href="authentification.html?mode=inscription&next=index.html">S'inscrire</a>
+        <a href="compte.html">Mon profil</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <strong style="color:white;font-size:13px;">Suivez-nous</strong><br><br>
+        <p style="color:rgba(255,255,255,0.4);font-size:13px;">Votre ville, Votre pays</p>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 CinéScène — Projet de démonstration.</p>
+  </div>
+</footer>
+
+<script>
+  
+  // ── Chargement des films depuis l'API ────────────────────
+  const API_BASE = '/api';
+
+  const container = document.getElementById('slides-container');
+  const dotsEl    = document.getElementById('dots');
+  const grid      = document.getElementById('films-grid');
+  let films = [];
+
+  function afficherSemaineCourante() {
+  const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const aujourdHui = window.CP_DEMO_TODAY || new Date();
+  const jourSemaine = (aujourdHui.getDay() + 5) % 7; // mardi = 0 ... lundi = 6 (fermé)
+  const lundi = new Date(aujourdHui);
+  lundi.setDate(aujourdHui.getDate() - jourSemaine);
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate() + 5);
+  let texte;
+  if (lundi.getMonth() === dimanche.getMonth()) {
+    texte = `Semaine du ${lundi.getDate()} au ${dimanche.getDate()} ${MOIS[lundi.getMonth()]} ${lundi.getFullYear()}`;
+  } else {
+    texte = `Semaine du ${lundi.getDate()} ${MOIS[lundi.getMonth()]} au ${dimanche.getDate()} ${MOIS[dimanche.getMonth()]} ${dimanche.getFullYear()}`;
+  }
+  document.getElementById('section-sub-semaine').textContent = texte;
+}
+afficherSemaineCourante();
+
+
+  function renderGridSkeleton() {
+    grid.innerHTML = Array.from({length: 4}).map(() => `
+      <div class="col-lg-3 col-md-4 col-sm-6">
+        <div class="skeleton grid-skeleton-card"></div>
+      </div>`).join('');
+  }
+
+  function ouvrirTrailer(filmId, cardEl, posterUrl) {
+  const rect = cardEl.getBoundingClientRect();
+  const clone = document.createElement('div');
+  clone.className = 'card-clone-overlay';
+  clone.style.top = rect.top + 'px';
+  clone.style.left = rect.left + 'px';
+  clone.style.width = rect.width + 'px';
+  clone.style.height = rect.height + 'px';
+  clone.innerHTML = `<img src="${posterUrl}" alt="">`;
+  document.body.appendChild(clone);
+
+  const fade = document.createElement('div');
+  fade.className = 'page-fade-overlay';
+  document.body.appendChild(fade);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      clone.style.top = '0';
+      clone.style.left = '0';
+      clone.style.width = '100vw';
+      clone.style.height = '100vh';
+      clone.style.borderRadius = '0';
+      fade.style.opacity = '0.4';
+    });
+  });
+
+  setTimeout(() => { window.location.href = `trailer.html?id=${filmId}`; }, 400);
+}
+
+function allerVersMarket(filmId, type, btn) {
+  document.querySelectorAll('.btn-horaires').forEach(b => {
+    if (!b.dataset.originalHtml) b.dataset.originalHtml = b.innerHTML;
+    b.disabled = true;
+  });
+  if (btn) btn.textContent = 'Chargement…';
+  window.location.href = `market.html?openFilm=${filmId}&type=${type}`;
+}
+  const JOURS_FR = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const jourEnLettres = iso => JOURS_FR[new Date(iso + 'T00:00:00').getDay()];
+
+  async function chargerFilms() {
+    container.innerHTML = `<div class="skeleton hero-skeleton"></div>`;
+    dotsEl.innerHTML = '';
+    renderGridSkeleton();
+
+    try {
+      const response = await fetch(`${API_BASE}/films/`);
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      films = await response.json();
+    } catch (error) {
+      console.error('Erreur de chargement des films:', error);
+      container.innerHTML = `<div class="state-box" style="height:100%;">${ico('alert', '1.6em')} Impossible de charger les films.<button class="btn-retry" onclick="chargerFilms()">Réessayer</button></div>`;
+      grid.innerHTML = `<div class="state-box">${ico('alert', '1.6em')} Impossible de charger les films.<button class="btn-retry" onclick="chargerFilms()">Réessayer</button></div>`;
+      return;
+    }
+
+    if (films.length === 0) {
+      container.innerHTML = `<div class="state-box" style="height:100%;">Aucun film programmé cette semaine.</div>`;
+      grid.innerHTML = `<div class="state-box">Aucun film programmé cette semaine.</div>`;
+      return;
+    }
+    container.innerHTML = '';
+    grid.innerHTML = '';
+
+    // ── Slides du carrousel ──────────────────────────────
+    films.forEach((f, i) => {
+      const slide = document.createElement('div');
+      slide.className = 'slide' + (i === 0 ? ' active' : '');
+      const isMobile = window.innerWidth <= 768;
+      const heroImg = isMobile
+        ? (f.poster_portrait || f.poster_paysage || '')
+        : (f.poster_paysage || f.poster_portrait || '');
+      slide.innerHTML = `
+        <img src="${heroImg}" class="slide-bg" alt="${f.titre}">
+        <div class="slide-overlay"></div>
+        <div class="slide-content">
+          <span class="slide-genre">${f.genre}</span>
+          <h1 class="slide-title">${f.titre}</h1>
+          <p class="slide-synopsis">${f.synopsis || ''}</p>
+          <div class="slide-btns">
+            <button class="btn-horaires btn-achat-hero" onclick="allerVersMarket(${f.id}, 'achat', this)">${ico('ticket')} ACHETER</button>
+            <button class="btn-horaires" onclick="allerVersMarket(${f.id}, 'reserve', this)">${ico('bookmark')} RÉSERVER</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(slide);
+
+      const dot = document.createElement('button');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.onclick = () => goTo(i);
+      dotsEl.appendChild(dot);
+    });
+    resetTimer();
+
+    // ── Grille des films ──────────────────────────────────
+    films.forEach((f) => {
+      const joursUniques = [...new Set((f.seances || []).map(s => jourEnLettres(s.jour)))];
+      const horaire = joursUniques.length ? joursUniques.join(', ') : '—';
+      const acteursListe = (f.acteurs || '').split(',').map(a => a.trim()).filter(Boolean);
+
+      const col = document.createElement('div');
+      col.className = 'col-lg-3 col-md-4 col-sm-6';
+      let badgeHtml = '';
+      if (f.type_tarif === 'avant-premiere') badgeHtml = `<span class="film-badge premiere">Première</span>`;
+      else if (f.nouveau) badgeHtml = `<span class="film-badge nouveau">Nouveauté</span>`;
+      else if (f.age_minimum) badgeHtml = `<span class="film-badge age">-${f.age_minimum}</span>`;
+     col.innerHTML = `
+        <div class="film-card" onclick="ouvrirTrailer(${f.id}, this, '${(f.poster_portrait||'').replace(/'/g,"\\'")}')">
+          <img src="${f.poster_portrait || ''}" alt="${f.titre}">
+          ${badgeHtml}
+          <div class="film-card-body">
+            <div class="film-card-genre">${f.genre}</div>
+            <div class="film-card-title">${f.titre}</div>
+          </div>
+          <div class="film-card-footer" style="justify-content:center;">
+            <span class="film-horaire">${ico('calendar')} ${horaire}</span>
+          </div>
+          <div class="card-tooltip">
+            <div class="tooltip-title">${f.titre}</div>
+            <div class="tooltip-synopsis">${f.synopsis || ''}</div>
+            <div class="tooltip-acteurs">
+              <strong>Avec</strong>
+              ${acteursListe.join(' · ')}
+            </div>
+          </div>
+        </div>
+      `;
+      grid.appendChild(col);
+    });
+  }
+
+  const DEJA_VISITE_KEY = 'cp_curtain_visite';
+  const premiereVisite = !sessionStorage.getItem(DEJA_VISITE_KEY);
+  const dureeMinRideau = premiereVisite ? 1500 : 0;
+  sessionStorage.setItem(DEJA_VISITE_KEY, '1');
+
+  const attenteMin = new Promise(resolve => setTimeout(resolve, dureeMinRideau));
+
+  Promise.all([chargerFilms(), attenteMin]).finally(() => {
+    document.getElementById('page-curtain')?.classList.add('hide');
+  });
+
+  
+  
+  // ── Logique carousel ─────────────────────────────────────
+  let current = 0;
+  let autoTimer = null;
+  let isAnimating = false;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const DELAY = 5000;
+
+  const getSlides = () => document.querySelectorAll('.slide');
+  const getDots   = () => document.querySelectorAll('.dot');
+
+  function goTo(n, dir) {
+    if (isAnimating || n === current) return;
+    const allSlides = getSlides();
+    const prev = current;
+    const direction = dir !== undefined ? dir : (n > prev ? 1 : -1);
+
+    if (!reducedMotion) {
+      isAnimating = true;
+
+      allSlides[prev].style.transition = 'transform 0.55s cubic-bezier(.77,0,.18,1), opacity 0.4s';
+      allSlides[prev].style.transform  = direction === 1 ? 'translateX(-100%)' : 'translateX(100%)';
+      allSlides[prev].style.opacity    = '0';
+
+      allSlides[n].style.transition = 'none';
+      allSlides[n].style.transform  = direction === 1 ? 'translateX(100%)' : 'translateX(-100%)';
+      allSlides[n].style.opacity    = '0';
+      allSlides[n].classList.add('active');
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          allSlides[n].style.transition = 'transform 0.55s cubic-bezier(.77,0,.18,1), opacity 0.4s';
+          allSlides[n].style.transform  = 'translateX(0)';
+          allSlides[n].style.opacity    = '1';
+        });
+      });
+
+      setTimeout(() => {
+        allSlides[prev].classList.remove('active');
+        allSlides[prev].style.transform = '';
+        allSlides[prev].style.opacity   = '';
+        allSlides[prev].style.transition = '';
+        allSlides[n].style.transition   = '';
+        isAnimating = false;
+      }, 600);
+    } else {
+      allSlides[prev].classList.remove('active');
+      allSlides[n].classList.add('active');
+    }
+
+    getDots().forEach((d, i) => d.classList.toggle('active', i === n));
+    current = n;
+    resetTimer();
+  }
+
+  function nextSlide() { goTo((current + 1) % films.length, 1); }
+  function prevSlide() { goTo((current - 1 + films.length) % films.length, -1); }
+
+  function resetTimer() {
+    clearInterval(autoTimer);
+    autoTimer = setInterval(nextSlide, DELAY);
+  }
+
+    // ── Pause du carrousel quand l'onglet n'est pas visible ──
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      clearInterval(autoTimer);
+    } else {
+      // Nettoyage défensif : si une transition était en cours au moment
+      // du changement d'onglet, le setTimeout a pu être retardé par le
+      // navigateur → on force un état propre avant de relancer le timer.
+      isAnimating = false;
+      getSlides().forEach((s, i) => {
+        s.style.transition = '';
+        s.style.transform = '';
+        s.style.opacity = '';
+        s.classList.toggle('active', i === current);
+      });
+      resetTimer();
+    }
+  });
+ 
+  // ── Menu burger mobile ──────────────────────────────────
+  function toggleMobileMenu() {
+    const menu = document.getElementById('mobile-menu');
+    const btn = document.getElementById('burger-btn');
+    const isOpen = menu.classList.toggle('open');
+    btn.classList.toggle('open', isOpen);
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+
+  async function verifierAccesCompte() {
+  const navRight = document.getElementById('nav-right');
+  const mobileAuth = document.getElementById('mobile-auth-block');
+  const PAGE = 'index.html'; 
+
+  try {
+    const res = await fetch(`${API_BASE}/me/`, { credentials: 'include' });
+    if (res.ok) {
+      navRight.innerHTML = `
+        <a href="compte.html" class="btn-account">
+          ${ico('user')}
+        </a>`;
+      mobileAuth.innerHTML = `<a href="compte.html">Mon compte</a>`;
+    } else {
+      navRight.innerHTML = `
+        <a href="authentification.html?mode=connexion&next=${PAGE}" class="btn-login">Se connecter</a>
+        <a href="authentification.html?mode=inscription&next=${PAGE}" class="btn-register">S'inscrire</a>`;
+      mobileAuth.innerHTML = `
+        <a href="authentification.html?mode=connexion&next=${PAGE}" class="btn-login">Se connecter</a>
+        <a href="authentification.html?mode=inscription&next=${PAGE}" class="btn-register">S'inscrire</a>`;
+    }
+  } catch (e) {
+    console.error('Erreur vérification session:', e);
+  }
+}
+
+verifierAccesCompte();
+window.addEventListener('pageshow', (e) => {
+  document.querySelectorAll('.card-clone-overlay, .page-fade-overlay').forEach(el => el.remove());
+  if (e.persisted) {
+    document.querySelectorAll('.btn-horaires').forEach(b => {
+      b.disabled = false;
+      if (b.dataset.originalHtml) b.innerHTML = b.dataset.originalHtml;
+    });
+  }
+});
+  </script>
+</body>
+</html>

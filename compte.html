@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mon Compte – CinéScène</title>
+<script src="mock-api.js"></script>
+<script src="icons.js"></script>
+<script src="tutorial-guide.js"></script>
+<link href="css/bootstrap.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+    --gris-dark: #1a1a1a;
+    --rouge: #c0392b;
+    --vert: #2ecc71;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: #0a0a0a; color: white; overflow-x: hidden; }
+
+    /* ══ NAVBAR ══════════════════════════════════════════ */
+    .navbar {
+        position: fixed;
+        width: 100%;
+        padding: 18px 50px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 999;
+        background: linear-gradient(135deg,rgba(0,0,0,0.55),rgba(26,26,26,0.45),rgba(255,106,0,0.35));
+        backdrop-filter: blur(7px);
+    }
+    .nav-left { display: flex; align-items: center; }
+    .logo-wrap { display: flex; align-items: center; text-decoration: none; }
+    .logo-img { height: 42px; width: auto; object-fit: contain; }
+    .nav-center {
+        display: flex; align-items: center; gap: 4px;
+        position: absolute; left: 50%; transform: translateX(-50%);
+    }
+    .nav-center a {
+        font-size: 14.5px; font-weight: 500; color: rgba(255,255,255,0.85);
+        text-decoration: none; padding: 8px 14px; border-radius: 8px;
+        transition: background 0.15s, color 0.15s;
+    }
+    .nav-center a:hover { background: rgba(255,255,255,0.1); color: white; }
+    .nav-center a.active {
+        background: rgba(255,140,0,0.18); color: var(--orange);
+        box-shadow: 0 0 0 1px rgba(255,140,0,0.25);
+    }
+    .nav-right { display: flex; align-items: center; gap: 10px; }
+
+
+    /* ══ BURGER MOBILE ════════════════════════════════════ */
+    .burger-btn {
+        display: none; flex-direction: column; justify-content: center; gap: 5px;
+        width: 38px; height: 38px; background: rgba(255,255,255,0.08);
+        border: 1.5px solid rgba(255,255,255,0.2); border-radius: 8px;
+        cursor: pointer; padding: 0;
+    }
+    .burger-btn span {
+        display: block; width: 18px; height: 2px; margin: 0 auto;
+        background: white; border-radius: 2px; transition: transform 0.25s, opacity 0.25s;
+    }
+    .burger-btn.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .burger-btn.open span:nth-child(2) { opacity: 0; }
+    .burger-btn.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mobile-menu {
+        position: fixed; inset: 0; background: rgba(10,10,10,0.97);
+        backdrop-filter: blur(10px); z-index: 1000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    }
+    .mobile-menu.open { opacity: 1; pointer-events: all; }
+    .mobile-menu a {
+        font-family: 'Montserrat', sans-serif; font-size: 20px; font-weight: 700;
+        color: rgba(255,255,255,0.85); text-decoration: none;
+        padding: 10px 24px; border-radius: 10px; transition: background 0.15s, color 0.15s;
+    }
+    .mobile-menu a:hover, .mobile-menu a.active { background: rgba(255,140,0,0.15); color: var(--orange); }
+    .mobile-menu-divider { width: 60px; height: 1px; background: rgba(255,255,255,0.15); margin: 10px 0; }
+    .mobile-menu-close {
+        position: absolute; top: 22px; right: 24px; width: 38px; height: 38px;
+        background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+        border-radius: 8px; color: white; font-size: 18px; cursor: pointer;
+    }
+
+    @media (max-width: 1100px) {
+        .nav-center, .nav-right { display: none; }
+        .burger-btn { display: flex; }
+        .navbar { padding: 14px 20px; }
+    }
+
+  /* ══ PAGE COMPTE ══════════════════════════════════════ */
+  .compte-page { padding-top: 110px; min-height: 100vh; background: #0a0a0a; padding-bottom: 80px; }
+  .compte-page .container { max-width: 980px; }
+
+  /* ── Bloc profil + jauge ──────────────────────────────── */
+  .profil-card {
+    background: #141414;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 28px 30px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 26px;
+  }
+  .profil-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: linear-gradient(155deg, rgba(255,140,0,0.9), var(--orange-dark));
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 22px;
+    color: white; flex-shrink: 0;
+  }
+  .profil-info { flex: 1; min-width: 0; }
+  .profil-name { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 19px; color: white; }
+  .profil-email { font-size: 12.5px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+  .niveau-row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-top: 18px; margin-bottom: 8px; gap: 10px; flex-wrap: wrap;
+  }
+  .niveau-badge {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px;
+    color: var(--orange);
+  }
+  .niveau-badge .niveau-icon { font-size: 16px; }
+  .niveau-points { font-size: 12px; color: rgba(255,255,255,0.45); }
+  .niveau-points strong { color: rgba(255,255,255,0.85); font-weight: 700; }
+
+  .jauge-track {
+    width: 100%; height: 10px; border-radius: 6px;
+    background: rgba(255,255,255,0.07);
+    overflow: hidden; position: relative;
+  }
+  .jauge-fill {
+    height: 100%; border-radius: 6px;
+    background: linear-gradient(90deg, var(--orange-dark), var(--orange));
+    transition: width 0.6s cubic-bezier(.25,.8,.25,1);
+  }
+  .jauge-next {
+    font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 8px;
+  }
+  .jauge-next strong { color: rgba(255,255,255,0.6); }
+
+  .paliers-strip {
+    display: flex; justify-content: space-between; margin-top: 14px;
+    gap: 4px;
+  }
+  .palier-chip {
+    flex: 1; text-align: center; font-size: 10px; font-weight: 700;
+    letter-spacing: 0.3px; padding: 6px 2px; border-radius: 5px;
+    color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.05);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .palier-chip.atteint { color: var(--orange); background: rgba(255,140,0,0.08); border-color: rgba(255,140,0,0.2); }
+  .palier-chip.courant { color: white; background: rgba(255,140,0,0.18); border-color: var(--orange); }
+
+  @media (max-width: 640px) {
+    .profil-card { flex-direction: column; align-items: flex-start; }
+    .paliers-strip { display: none; }
+  }
+
+  /* ── Barème de points ─────────────────────────────────── */
+  .bareme-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 12px;
+  }
+  .bareme-item {
+    background: #141414; border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px; padding: 16px 18px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  .bareme-icon {
+    width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+    background: rgba(255,140,0,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+  }
+  .bareme-pts {
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; color: var(--orange);
+  }
+  .bareme-label { font-size: 12px; color: rgba(255,255,255,0.55); line-height: 1.4; margin-top: 1px; }
+
+  /* ── Sections génériques ──────────────────────────────── */
+  .section-block { margin-bottom: 34px; }
+  .section-block-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 16px; gap: 10px; flex-wrap: wrap;
+  }
+  .section-block-title {
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 17px; color: white;
+  }
+  .section-block-sub { font-size: 12.5px; color: rgba(255,255,255,0.4); }
+
+  /* ── Billets actifs ───────────────────────────────────── */
+  .billets-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+  }
+  .billet-card {
+    background: #161616;
+    border: 2px dashed rgba(255,255,255,0.18);
+    border-radius: 12px;
+    overflow: visible;
+    position: relative;
+    display: flex; flex-direction: column;
+  }
+  .billet-card.pending { border-color: rgba(241,196,15,0.3); }
+
+  /* Encoches "ticket déchiré" en haut et en bas, perçant le contour pointillé */
+  .billet-card::before,
+  .billet-card::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 22px; height: 22px;
+    background: #0a0a0a;
+    border-radius: 50%;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  .billet-card::before { top: -13px; }
+  .billet-card::after  { bottom: -13px; }
+
+  .billet-head {
+    display: flex; gap: 12px; align-items: center;
+    padding: 14px 16px; border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .billet-poster { width: 42px; height: 56px; border-radius: 4px; object-fit: cover; object-position: top; flex-shrink: 0; background: #0d0d0d; }
+  .billet-head-info { flex: 1; min-width: 0; }
+  .billet-type { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--orange); }
+  .billet-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 13.5px; color: white; line-height: 1.25; margin-top: 2px; }
+  .billet-meta { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+  .billet-body { padding: 18px 16px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .billet-qr { background: white; padding: 8px; border-radius: 8px; display: inline-block; line-height: 0; }
+  .billet-qr canvas { display: block; width: 120px !important; height: 120px !important; }
+
+  .billet-code {
+    font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+    color: var(--orange); letter-spacing: 1.5px; margin-top: 12px; word-break: break-all;
+  }
+
+  .billet-pending-label {
+    font-size: 11.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: rgba(241,196,15,0.85); margin-bottom: 4px;
+  }
+  .billet-pending-note { font-size: 11.5px; color: rgba(255,255,255,0.4); line-height: 1.5; max-width: 200px; }
+
+  .billet-footer {
+    padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 10.5px; color: rgba(255,255,255,0.35); text-align: center;
+  }
+  .billet-footer.payee { color: rgba(46,204,113,0.7); }
+
+  .empty-state {
+    background: #141414; border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 32px 20px; text-align: center;
+    color: rgba(255,255,255,0.35); font-size: 13px;
+  }
+
+  /* ── Historique ───────────────────────────────────────── */
+  .historique-table-wrap {
+    background: #141414; border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; overflow: hidden;
+  }
+  table.historique-table { width: 100%; border-collapse: collapse; }
+  .historique-table th {
+    text-align: left; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.015);
+  }
+  .historique-table td {
+    padding: 13px 16px; font-size: 13px; color: rgba(255,255,255,0.8);
+    border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle;
+  }
+  .historique-table tr:last-child td { border-bottom: none; }
+  .historique-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .hist-title { font-weight: 700; color: white; }
+  .hist-sub { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 2px; }
+
+  .statut-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.3px;
+    padding: 4px 10px; border-radius: 5px;
+  }
+  .statut-tag.paye { background: rgba(46,204,113,0.12); color: var(--vert); }
+  .statut-tag.attente { background: rgba(241,196,15,0.12); color: #f1c40f; }
+
+  .ville-pill {
+    font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 4px;
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55);
+  }
+
+  .points-cell { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 12.5px; }
+  .points-cell.gagnes { color: var(--orange); }
+  .points-cell.attente-pts { color: rgba(255,255,255,0.25); }
+
+  .btn-logout-compte {
+  background: transparent; border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.55); border-radius: 8px; padding: 8px 16px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer; transition: 0.15s;
+  margin-left: auto;
+}
+.btn-logout-compte:hover { border-color: var(--rouge); color: var(--rouge); }
+
+  @media (max-width: 700px) {
+    .historique-table-wrap { overflow-x: auto; }
+    table.historique-table { min-width: 620px; }
+  }
+
+  /* ══ FOOTER ══════════════════════════════════════════ */
+  footer { background: #050505; padding: 40px 0 20px; border-top: 1px solid rgba(255,255,255,0.06); }
+  .footer-tagline { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
+  .footer-links a { color: rgba(255,255,255,0.5); text-decoration: none; font-size: 13px; display: block; margin-bottom: 8px; }
+  .footer-links a:hover { color: var(--orange); }
+  .footer-copy { color: rgba(255,255,255,0.25); font-size: 12px; text-align: center; margin-top: 30px; }
+  footer .row { text-align: center; }
+    footer .col-md-4 img { margin-left: auto; margin-right: auto; }
+    footer .footer-links {
+      padding: 16px 0;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+    footer .col-md-4:first-child + .footer-links { border-top: none; padding-top: 0; }
+    footer .footer-links strong { display: block; margin-bottom: 8px; }
+    footer .footer-links a { margin-bottom: 6px; }
+    footer .col-md-4:last-child { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; }
+    .footer-copy { margin-top: 20px; }
+  .page-curtain { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
+  .page-curtain img { width: 130px; animation: curtainPulse 1.4s ease-in-out infinite; }
+  @keyframes curtainPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.08); opacity: 1; } }
+  .page-curtain.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+</style>
+</head>
+<body>
+  <div class="page-curtain" id="page-curtain">
+    <img src="images/logo.png" alt="CinéScène">
+  </div>
+
+<!-- ═══ NAVBAR ═══════════════════════════════════════════ -->
+<nav class="navbar">
+    <div class="nav-left">
+        <a href="index.html" class="logo-wrap">
+            <img src="images/logo.png" alt="CinéScène" class="logo-img">
+        </a>
+    </div>
+    <div class="nav-center">
+        <a href="index.html">Accueil</a>
+        <a href="programme.html">Programme</a>
+        <a href="market.html">Market</a>
+        <a href="events.html">Événements</a>
+        <a href="contact.html">Contact</a>
+    </div>
+    <div class="nav-right">
+
+    </div>
+    <button class="burger-btn" id="burger-btn" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+    </button>
+</nav>
+
+<div class="mobile-menu" id="mobile-menu">
+    <button class="mobile-menu-close" onclick="toggleMobileMenu()" aria-label="Fermer">&times;</button>
+    <a href="index.html">Accueil</a>
+    <a href="programme.html">Programme</a>
+    <a href="market.html">Market</a>
+    <a href="events.html">Événements</a>
+    <a href="contact.html">Contact</a>
+    <div class="mobile-menu-divider"></div>
+</div>
+
+<!-- ═══ PAGE COMPTE ═══════════════════════════════════════ -->
+<div class="compte-page">
+  <div class="container">
+
+    <!-- ── Profil + jauge de fidélité ─────────────────── -->
+    <div class="profil-card">
+      <div class="profil-avatar" id="profil-avatar">J</div>
+      <div class="profil-info">
+        <div class="profil-name" id="profil-name">Chargement…</div>
+        <div class="profil-email" id="profil-email">Chargement…</div>
+
+        <div class="niveau-row">
+          <div class="niveau-badge">
+            <span class="niveau-icon" id="niveau-icon"></span>
+            <span id="niveau-label">Passionné</span>
+          </div>
+          <div class="niveau-points"><strong id="points-actuels">44</strong> pts</div>
+        </div>
+
+        <div class="jauge-track">
+          <div class="jauge-fill" id="jauge-fill" style="width:0%"></div>
+        </div>
+        <div class="jauge-next" id="jauge-next"></div>
+
+        <div class="paliers-strip" id="paliers-strip"></div>
+      </div>
+      <button class="btn-logout-compte" onclick="deconnecter()"><i data-ico="logout"></i> Déconnexion</button>
+    </div>
+
+    <!-- ── Comment gagner des points ───────────────────── -->
+    <div class="section-block">
+      <div class="section-block-head">
+        <div class="section-block-title">Comment gagner des points</div>
+        <div class="section-block-sub">Crédités automatiquement dès que votre commande est intégralement réglée</div>
+      </div>
+      <div class="bareme-grid">
+        <div class="bareme-item">
+          <div class="bareme-icon"><i data-ico="ticket"></i></div>
+          <div>
+            <div class="bareme-pts">1 pt</div>
+            <div class="bareme-label">Billet cinéma standard</div>
+          </div>
+        </div>
+        <div class="bareme-item">
+          <div class="bareme-icon"><i data-ico="users"></i></div>
+          <div>
+            <div class="bareme-pts">2 pts</div>
+            <div class="bareme-label">Réservation / achat multiplace (2 places et +)</div>
+          </div>
+        </div>
+        <div class="bareme-item">
+          <div class="bareme-icon"><i data-ico="flame"></i></div>
+          <div>
+            <div class="bareme-pts">5 pts</div>
+            <div class="bareme-label">Séance avant-première</div>
+          </div>
+        </div>
+        <div class="bareme-item">
+          <div class="bareme-icon"><i data-ico="sparkles"></i></div>
+          <div>
+            <div class="bareme-pts">10 pts</div>
+            <div class="bareme-label">Événement spécial / concert</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Mes billets actifs ──────────────────────────── -->
+    <div class="section-block">
+      <div class="section-block-head">
+        <div class="section-block-title">Mes billets actifs</div>
+        <div class="section-block-sub">À présenter au guichet ou à l'entrée de la salle</div>
+      </div>
+      <div class="billets-grid" id="billets-grid"></div>
+    </div>
+
+    <!-- ── Historique des achats ───────────────────────── -->
+    <div class="section-block">
+      <div class="section-block-head">
+        <div class="section-block-title">Historique des achats</div>
+        <div class="section-block-sub">Les points sont crédités une fois le paiement intégralement réglé</div>
+      </div>
+      <div class="historique-table-wrap">
+        <table class="historique-table">
+          <thead>
+            <tr>
+              <th>Commande</th>
+              <th>Ville</th>
+              <th>Date</th>
+              <th>Statut</th>
+              <th>Montant</th>
+              <th>Points</th>
+            </tr>
+          </thead>
+          <tbody id="historique-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ FOOTER ════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-md-4 mb-4">
+        <img src="images/logo.png" alt="CinéScène" style="height:90px;width:auto;object-fit:contain;margin-bottom:6px;">
+        <p class="footer-tagline">Le lieu où le cinéma rencontre la scène</p>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Navigation</strong><br><br>
+        <a href="index.html">Accueil</a>
+        <a href="programme.html">Programme</a>
+        <a href="market.html">Market</a>
+        <a href="events.html">Événements</a>
+      </div>
+      <div class="col-md-2 footer-links mb-4">
+        <strong style="color:white;font-size:13px;">Compte</strong><br><br>
+        <a href="compte.html">Mon profil</a>
+        <a href="#billets-grid">Mes billets</a>
+      </div>
+      <div class="col-md-4 mb-4">
+        <strong style="color:white;font-size:13px;">Suivez-nous</strong><br><br>
+        <p style="color:rgba(255,255,255,0.4);font-size:13px;">Votre ville, Votre pays</p>
+      </div>
+    </div>
+    <p class="footer-copy">© 2026 CinéScène — Projet de démonstration.</p>
+  </div>
+</footer>
+
+<script>
+
+  const API_BASE = '/api';
+
+
+function getCookie(name) {
+  const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return match ? match.pop() : '';
+}
+
+async function deconnecter() {
+  const csrftoken = getCookie('csrftoken');
+  try {
+    await fetch(`${API_BASE}/auth/deconnexion/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+    });
+  } catch (e) {
+    console.error('Erreur déconnexion:', e);
+  } finally {
+    window.location.href = 'index.html';
+  }
+}
+/* ══════════════════════════════════════════════════════════
+   CHARGEMENT RÉEL DEPUIS L'API
+   ══════════════════════════════════════════════════════════ */
+const PALIERS = [
+  { nom: "Novice",    seuil: 0,   icon: "sprout" },
+  { nom: "Passionné", seuil: 20,  icon: "film" },
+  { nom: "Aspirant",  seuil: 60,  icon: "ticket" },
+  { nom: "Cinéphile", seuil: 140, icon: "trophy" },
+  { nom: "Expert",    seuil: 300, icon: "crown" },
+];
+
+let profil = null;
+let commandes = [];
+
+function initials(prenom, nom) {
+  return ((prenom?.[0] || "") + (nom?.[0] || "")).toUpperCase() || "?";
+}
+
+async function verifierAccesCompte() {
+  const res = await fetch(`${API_BASE}/me/`, { credentials: 'include' });
+  if (!res.ok) {
+    window.location.href = 'authentification.html?mode=connexion&next=compte.html';
+    return false;
+  }
+  profil = await res.json();
+  return true;
+}
+
+async function chargerCommandes() {
+  const res = await fetch(`${API_BASE}/mes-commandes/`, { credentials: 'include' });
+  commandes = res.ok ? await res.json() : [];
+}
+
+/* ══════════════════════════════════════════════════════════
+   PROFIL + JAUGE DE FIDÉLITÉ
+   ══════════════════════════════════════════════════════════ */
+function renderProfil() {
+  const ini = initials(profil.prenom, profil.nom);
+  document.getElementById('profil-avatar').textContent = ini;
+  document.getElementById('profil-name').textContent = `${profil.prenom} ${profil.nom}`;
+  document.getElementById('profil-email').textContent = profil.email;
+
+  const points = profil.points_fidelite;
+  document.getElementById('points-actuels').textContent = points;
+
+  let courantIdx = 0;
+  for (let i = 0; i < PALIERS.length; i++) {
+    if (points >= PALIERS[i].seuil) courantIdx = i;
+  }
+  const courant = PALIERS[courantIdx];
+  const suivant = PALIERS[courantIdx + 1] || null;
+
+  document.getElementById('niveau-icon').innerHTML = ico(courant.icon);
+  document.getElementById('niveau-label').textContent = courant.nom;
+
+  if (suivant) {
+    const plage = suivant.seuil - courant.seuil;
+    const progres = points - courant.seuil;
+    const pct = Math.min(100, Math.round((progres / plage) * 100));
+    document.getElementById('jauge-fill').style.width = pct + '%';
+    document.getElementById('jauge-next').innerHTML =
+      `Encore <strong>${suivant.seuil - points} pts</strong> pour atteindre le palier <strong>${suivant.nom}</strong>`;
+  } else {
+    document.getElementById('jauge-fill').style.width = '100%';
+    document.getElementById('jauge-next').innerHTML = `<strong>Niveau maximum atteint</strong> — merci pour votre fidélité !`;
+  }
+
+  const strip = document.getElementById('paliers-strip');
+  strip.innerHTML = PALIERS.map((p, i) => {
+    let cls = '';
+    if (i === courantIdx) cls = 'courant';
+    else if (i < courantIdx) cls = 'atteint';
+    return `<div class="palier-chip ${cls}">${p.nom}</div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   BILLETS ACTIFS (tickets non consommés, QR via qrcode.js)
+   ══════════════════════════════════════════════════════════ */
+function renderBillets() {
+  const grid = document.getElementById('billets-grid');
+
+  // Un billet actif = un ticket au statut "valide" (solde OU entrée)
+  const billetsActifs = [];
+  commandes.forEach(c => {
+    (c.tickets || []).forEach(t => {
+      if (t.statut === 'valide') billetsActifs.push({ commande: c, ticket: t });
+    });
+  });
+
+  if (billetsActifs.length === 0) {
+    grid.innerHTML = `<div class="empty-state">Aucun billet actif pour le moment. Réservez une séance ou un événement depuis le Market.</div>`;
+    return;
+  }
+
+  grid.innerHTML = '';
+  billetsActifs.forEach((b, i) => {
+    const c = b.commande, t = b.ticket;
+    const dateStr = c.date_seance ? new Date(c.date_seance).toLocaleDateString('fr-FR', { day:'numeric', month:'short' }) : '';
+    const heureStr = c.heure_seance ? c.heure_seance.slice(0,5) : '';
+    const meta = `${dateStr}${heureStr ? ' · ' + heureStr : ''} · ${c.ville_label} · ${c.quantite_places} place(s)`;
+    const type = c.type_objet === 'evenement' ? 'Événement' : (t.type_jeton === 'entree' ? 'Achat' : 'Réservation');
+
+    const card = document.createElement('div');
+    card.className = 'billet-card' + (t.type_jeton === 'solde' ? ' pending' : '');
+
+    if (t.type_jeton === 'entree') {
+      card.innerHTML = `
+        <div class="billet-head">
+          <img class="billet-poster" src="${c.poster || 'images/placeholder-poster.jpg'}" alt="${c.titre}">
+          <div class="billet-head-info">
+            <div class="billet-type">${type}</div>
+            <div class="billet-title">${c.titre}</div>
+            <div class="billet-meta">${meta}</div>
+          </div>
+        </div>
+        <div class="billet-body">
+          <div class="billet-qr" id="qr-${i}"></div>
+          <div class="billet-code">${t.jeton_uuid}</div>
+        </div>
+        <div class="billet-footer payee">${ico('check')} Billet d'entrée valide — scannable à l'entrée</div>
+      `;
+    } else {
+  card.innerHTML = `
+    <div class="billet-head">
+      <img class="billet-poster" src="${c.poster || 'images/placeholder-poster.jpg'}" alt="${c.titre}">
+      <div class="billet-head-info">
+        <div class="billet-type">${type}</div>
+        <div class="billet-title">${c.titre}</div>
+        <div class="billet-meta">${meta}</div>
+      </div>
+    </div>
+    <div class="billet-body">
+      <div class="billet-qr pending" id="qr-${i}"></div>
+      <div class="billet-pending-label" style="margin-top:10px;">En attente de règlement</div>
+      <div class="billet-code">${t.jeton_uuid}</div>
+      <div class="billet-pending-note" style="margin-top:10px;">Présentez ce QR au guichet pour régler le solde et recevoir votre billet d'entrée.</div>
+    </div>
+    <div class="billet-footer">Code de réservation — scannable au guichet uniquement</div>
+  `;
+}
+    grid.appendChild(card);
+  });
+
+  billetsActifs.forEach((b, i) => {
+  const container = document.getElementById(`qr-${i}`);
+  if (!container) return;
+  if (b.ticket.type_jeton === 'entree') {
+    new QRCode(container, {
+      text: b.ticket.jeton_uuid,
+      width: 120, height: 120,
+      colorDark: '#0a0a0a', colorLight: '#ffffff',
+    });
+  } else {
+    new QRCode(container, {
+      text: b.ticket.jeton_uuid,
+      width: 120, height: 120,
+      colorDark: '#0a0a0a', colorLight: '#ffffff',
+    });
+  }
+});
+}
+
+/* ══════════════════════════════════════════════════════════
+   HISTORIQUE DES ACHATS
+   ══════════════════════════════════════════════════════════ */
+function fmtMoney(n) { return n.toLocaleString('fr-FR') + ' FCFA'; }
+
+function renderHistorique() {
+  const body = document.getElementById('historique-body');
+  body.innerHTML = commandes.map(c => {
+    const paye = c.statut === 'paye';
+    const statutHtml = paye
+      ? `<span class="statut-tag paye">${ico('check')} Payé</span>`
+      : `<span class="statut-tag attente">${ico('clock')} En attente</span>`;
+    const pointsHtml = c.points_gagnes > 0
+      ? `<span class="points-cell gagnes">+${c.points_gagnes} pts</span>`
+      : `<span class="points-cell attente-pts">— pts</span>`;
+    const sub = `${c.quantite_places} place(s) · ${c.tarif_label}`;
+    const dateAffiche = new Date(c.date_creation).toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    return `
+      <tr>
+        <td><div class="hist-title">${c.titre}</div><div class="hist-sub">${sub}</div></td>
+        <td><span class="ville-pill">${c.ville_label}</span></td>
+        <td>${dateAffiche}</td>
+        <td>${statutHtml}</td>
+        <td>${fmtMoney(c.montant_total)}</td>
+        <td>${pointsHtml}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════════════════
+   MENU BURGER MOBILE
+   ══════════════════════════════════════════════════════════ */
+function toggleMobileMenu() {
+  const menu = document.getElementById('mobile-menu');
+  const btn = document.getElementById('burger-btn');
+  const isOpen = menu.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+
+/* ══════════════════════════════════════════════════════════
+   INIT
+   ══════════════════════════════════════════════════════════ */
+(async function init() {
+  const ok = await verifierAccesCompte();
+  if (!ok) return;
+  await chargerCommandes();
+  renderProfil();
+  renderBillets();
+  renderHistorique();
+})().finally(() => {
+  document.getElementById('page-curtain')?.classList.add('hide');
+});
+</script>
+</body>
+</html>

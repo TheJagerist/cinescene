@@ -1,0 +1,2360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration – CinéScène</title>
+<script src="mock-api.js"></script>
+<script src="icons.js"></script>
+<script src="tutorial-guide.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+    --rouge: #c0392b;
+    --vert: #2ecc71;
+    --ambre: #f1c40f;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; background: var(--noir); color: white; overflow-x: hidden; }
+
+  /* ══ SIDEBAR ═══════════════════════════════════════════ */
+  .admin-shell { display: flex; min-height: 100vh; }
+
+  .admin-sidebar {
+    width: 240px; flex-shrink: 0; background: #111;
+    border-right: 1px solid rgba(255,255,255,0.06);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; left: 0; height: 100vh; padding: 24px 0;
+  }
+  .sidebar-logo-wrap { padding: 0 24px 28px; }
+  .sidebar-logo-wrap img { height: 36px; }
+
+  .admin-nav { flex: 1; padding: 0 12px; overflow-y: auto; }
+  .admin-nav-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.3); padding: 18px 14px 8px;
+  }
+  .admin-nav-section-label:first-child { padding-top: 4px; }
+  .admin-nav-link {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+    border-radius: 8px; color: rgba(255,255,255,0.65); text-decoration: none;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+    transition: background 0.15s, color 0.15s; user-select: none;
+  }
+  .admin-nav-link:hover { background: rgba(255,255,255,0.06); color: white; }
+  .admin-nav-link.active { background: rgba(255,140,0,0.15); color: var(--orange); }
+
+  .admin-sidebar-footer { padding: 16px 14px 4px; border-top: 1px solid rgba(255,255,255,0.06); margin-top: 8px; }
+  .btn-logout {
+    width: 100%; background: transparent; border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.55); border-radius: 8px; padding: 10px;
+    font-size: 12.5px; font-weight: 600; cursor: pointer; transition: 0.15s;
+  }
+  .btn-logout:hover { border-color: var(--rouge); color: var(--rouge); }
+
+  /* ══ CONTENU ═══════════════════════════════════════════ */
+  .admin-main { margin-left: 240px; flex: 1; padding: 38px 44px 70px; min-height: 100vh; }
+  .admin-view { display: none; }
+  .admin-view.active { display: block; }
+
+  .admin-view-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+  .admin-view-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 25px; color: white; letter-spacing: -0.3px; }
+  .admin-view-sub { color: rgba(255,255,255,0.4); font-size: 13px; margin-top: 4px; }
+  .week-badge {
+    background: rgba(255,140,0,0.1); border: 1px solid rgba(255,140,0,0.25);
+    color: var(--orange); font-size: 11.5px; font-weight: 700;
+    padding: 7px 14px; border-radius: 6px; white-space: nowrap;
+  }
+
+  .label-sm {
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); margin-bottom: 14px;
+  }
+
+  /* ── Mode toggle (drop / manuel) ──────────────────────── */
+  .mode-toggle {
+    display: inline-flex; background: #161616; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 9px; padding: 4px; gap: 4px; margin-bottom: 24px;
+  }
+  .mode-toggle button {
+    background: transparent; border: none; color: rgba(255,255,255,0.5);
+    font-size: 12.5px; font-weight: 700; padding: 9px 18px; border-radius: 6px;
+    cursor: pointer; transition: 0.15s;
+  }
+  .mode-toggle button.active { background: var(--orange); color: white; }
+  .mode-panel { display: none; }
+  .mode-panel.active { display: block; }
+
+  /* ── Dropzone ──────────────────────────────────────────── */
+  .dropzone {
+    border: 2px dashed rgba(255,255,255,0.15); border-radius: 12px;
+    padding: 44px 24px; text-align: center; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s; position: relative;
+  }
+  .dropzone.dragover { border-color: var(--orange); background: rgba(255,140,0,0.05); }
+  .dropzone-icon { font-size: 36px; margin-bottom: 14px; opacity: 0.6; }
+  .dropzone-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 15px; color: white; margin-bottom: 6px; }
+  .dropzone-sub { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.6; max-width: 440px; margin: 0 auto; }
+  .dropzone input[type=file] { display: none; }
+
+  /* ── Candidats détectés ───────────────────────────────── */
+  .candidates-panel { margin-top: 20px; background: #161616; border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 18px 20px; }
+  .candidate-row { display: flex; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .candidate-row:last-child { border-bottom: none; }
+  .candidate-thumb {
+    width: 40px; height: 40px; border-radius: 6px; object-fit: cover; background: #0d0d0d;
+    flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .candidate-name {
+    font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: rgba(255,255,255,0.75);
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  select.candidate-role {
+    background: #1e1e1e; border: 1.5px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.75);
+    font-size: 11.5px; font-weight: 600; border-radius: 6px; padding: 7px 10px;
+    font-family: 'Inter', sans-serif; cursor: pointer; max-width: 220px;
+  }
+  select.detected-ok { border-color: rgba(46,204,113,0.4); color: var(--vert); }
+  select.detected-warn { border-color: rgba(241,196,15,0.4); color: var(--ambre); }
+
+  .parsed-info-box { margin-top: 16px; background: rgba(255,140,0,0.05); border: 1px solid rgba(255,140,0,0.15); border-radius: 10px; padding: 16px 18px; }
+  .parsed-row { display: flex; gap: 10px; font-size: 12.5px; margin-bottom: 7px; color: rgba(255,255,255,0.6); }
+  .parsed-row:last-child { margin-bottom: 0; }
+  .parsed-row strong { color: white; min-width: 95px; flex-shrink: 0; }
+
+  /* ── Formulaire manuel ────────────────────────────────── */
+  .form-row { margin-bottom: 16px; }
+  .form-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 7px; display: block; }
+  .form-input, .form-textarea {
+    width: 100%; background: #0d0d0d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 11px 14px; color: white; font-size: 13.5px;
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.15s;
+  }
+  .form-input:focus, .form-textarea:focus { border-color: var(--orange); }
+  .form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.2); }
+  .form-textarea { resize: vertical; min-height: 78px; line-height: 1.5; }
+  .form-input:disabled { opacity: 0.35; }
+  .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-input[type=file] { padding: 8px 10px; color: rgba(255,255,255,0.55); font-size: 12.5px; }
+  .form-input[type=file]::file-selector-button {
+    background: var(--orange); color: white; border: none; border-radius: 6px;
+    padding: 7px 14px; font-weight: 700; font-size: 12px; margin-right: 10px; cursor: pointer;
+  }
+  .form-input[type="date"]::-webkit-calendar-picker-indicator,
+  .form-input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(60%) sepia(90%) saturate(1000%) hue-rotate(360deg) brightness(100%);
+    cursor: pointer;
+  }
+
+  .chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip-btn {
+    background: #1e1e1e; color: rgba(255,255,255,0.55); border: 1.5px solid rgba(255,255,255,0.1);
+    border-radius: 6px; padding: 9px 16px; font-size: 12.5px; font-weight: 700; cursor: pointer;
+    transition: all 0.15s; font-family: 'Inter', sans-serif;
+  }
+  .chip-btn:hover { border-color: rgba(255,140,0,0.4); color: rgba(255,255,255,0.85); }
+  .chip-btn.selected { background: rgba(255,140,0,0.12); border-color: var(--orange); color: var(--orange); }
+
+  .libre-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: rgba(255,255,255,0.6); margin-bottom: 10px; cursor: pointer; }
+  .libre-check input { accent-color: var(--orange); width: 15px; height: 15px; cursor: pointer; }
+
+  /* ── Jours / heures ────────────────────────────────────── */
+  .jours-heures-grid { display: flex; flex-direction: column; gap: 8px; }
+  .jour-heure-row { display: flex; align-items: center; gap: 14px; background: #161616; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 9px 14px; }
+  .jour-check { display: flex; align-items: center; gap: 8px; width: 90px; font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); cursor: pointer; }
+  .jour-check input { accent-color: var(--orange); width: 15px; height: 15px; cursor: pointer; }
+  .jour-heure-input { background: #0d0d0d; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 6px 10px; color: white; font-size: 12.5px; font-family: 'Inter', sans-serif; }
+  .jour-heure-input:disabled { opacity: 0.25; }
+
+  /* ── Boutons d'action ──────────────────────────────────── */
+  .btn-validate {
+    background: var(--orange); color: white; border: none; border-radius: 8px;
+    padding: 13px 26px; font-weight: 700; font-size: 13.5px; letter-spacing: 0.3px;
+    cursor: pointer; transition: background 0.2s; margin-top: 10px;
+  }
+  .btn-validate:hover { background: var(--orange-dark); }
+
+  /* ── Tableau programme ─────────────────────────────────── */
+  .prog-table-wrap { margin-top: 36px; }
+  .prog-table { width: 100%; border-collapse: collapse; }
+  .prog-table th {
+    text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    color: rgba(255,255,255,0.35); padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .prog-table td { padding: 12px 14px; font-size: 13px; color: rgba(255,255,255,0.8); border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: middle; }
+  .prog-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .prog-thumb { width: 34px; height: 46px; object-fit: cover; border-radius: 4px; background: #1a1a1a; }
+  .btn-row-action {
+    background: transparent; border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.5);
+    font-size: 11px; font-weight: 600; padding: 6px 12px; border-radius: 5px; cursor: pointer;
+  }
+  .btn-row-action.danger:hover { border-color: var(--rouge); color: var(--rouge); }
+  .ville-tag { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; padding: 3px 8px; border-radius: 4px; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); }
+  .ville-tag.both { background: rgba(192,57,43,0.18); color: #e0796d; }
+
+  /* ── Statistiques ──────────────────────────────────────── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .stats-card { background: #161616; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 24px; }
+  .stats-card-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14.5px; color: white; margin-bottom: 18px; }
+  .stats-card-note { font-size: 11.5px; color: rgba(255,255,255,0.35); margin-top: 18px; line-height: 1.6; }
+  .rank-row { display: flex; align-items: center; gap: 14px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .rank-row:last-child { border-bottom: none; }
+  .rank-num { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 16px; width: 22px; color: rgba(255,255,255,0.3); flex-shrink: 0; }
+  .rank-row:first-child .rank-num { color: var(--orange); }
+  .rank-thumb { width: 32px; height: 44px; border-radius: 4px; object-fit: cover; flex-shrink: 0; }
+  .rank-info { flex: 1; min-width: 0; }
+  .rank-title { font-size: 12.5px; font-weight: 700; color: white; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .rank-value { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 12.5px; color: var(--orange); flex-shrink: 0; }
+
+  /* ── Historique clients ──────────────────────────────── */
+  .cli-hist-table-wrap { background:#161616; border:1px solid rgba(255,255,255,0.08); border-radius:12px; overflow:hidden; }
+  table.cli-hist-table { width:100%; border-collapse:collapse; }
+  .cli-hist-table th { text-align:left; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:rgba(255,255,255,0.35); padding:12px 14px; border-bottom:1px solid rgba(255,255,255,0.07); }
+  .cli-hist-table td { padding:12px 14px; font-size:13px; color:rgba(255,255,255,0.8); border-bottom:1px solid rgba(255,255,255,0.04); }
+  .cli-hist-statut { font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:5px; display:inline-block; }
+  .cli-hist-statut.paye { background:rgba(46,204,113,0.12); color:var(--vert); }
+  .cli-hist-statut.attente { background:rgba(241,196,15,0.12); color:#f1c40f; }
+  @media (max-width:900px) { .cli-hist-table-wrap { overflow-x:auto; } table.cli-hist-table { min-width:600px; } }
+
+  /* ── Stock & Places ──────────────────────────────────── */
+  .stock-card { background: #161616; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 18px 20px; margin-bottom: 14px; }
+  .stock-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+  .stock-card-head img { width: 36px; height: 48px; object-fit: cover; border-radius: 4px; background: #0d0d0d; }
+  .stock-card-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14px; color: white; }
+  .stock-row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid rgba(255,255,255,0.05); flex-wrap: wrap; }
+  .stock-row-label { flex: 1; min-width: 140px; font-size: 12.5px; color: rgba(255,255,255,0.6); }
+  .stock-row-bar-wrap { flex: 1; min-width: 120px; height: 8px; background: rgba(255,255,255,0.06); border-radius: 4px; overflow: hidden; }
+  .stock-row-bar { height: 100%; background: linear-gradient(90deg, var(--orange-dark), var(--orange)); }
+  .stock-row-bar.critique { background: linear-gradient(90deg, #7a1f14, var(--rouge)); }
+  .stock-row-count { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12.5px; color: white; min-width: 90px; text-align: right; }
+  .stock-row-count.sold-out { color: var(--rouge); }
+  .stock-adjust { display: flex; align-items: center; gap: 6px; }
+  .stock-adjust-btn { background: #222; color: white; border: 1px solid rgba(255,255,255,0.12); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-size: 14px; }
+  .stock-adjust-btn:hover { border-color: var(--orange); color: var(--orange); }
+
+  /* ── Module Caisse & Scans ──────────────────────────────── */
+  .caisse-layout { display: grid; grid-template-columns: 420px 1fr; gap: 24px; align-items: start; }
+
+  .scan-card {
+    background: #161616; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px; padding: 24px;
+  }
+  .scan-input-row { display: flex; gap: 10px; margin-bottom: 8px; }
+  .scan-input {
+    flex: 1; background: #0d0d0d; border: 1.5px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 13px 14px; color: white;
+    font-family: 'JetBrains Mono', monospace; font-size: 13.5px;
+    outline: none; transition: border-color 0.15s;
+  }
+  .scan-input:focus { border-color: var(--orange); }
+  .scan-input::placeholder { color: rgba(255,255,255,0.25); font-family: 'Inter', sans-serif; }
+  .btn-scan {
+    background: var(--orange); color: white; border: none; border-radius: 8px;
+    padding: 0 22px; font-weight: 700; font-size: 13px; cursor: pointer;
+    transition: background 0.2s; white-space: nowrap;
+  }
+  .btn-scan:hover { background: var(--orange-dark); }
+  .scan-hint { font-size: 11.5px; color: rgba(255,255,255,0.3); margin-bottom: 22px; line-height: 1.6; }
+  .btn-camera {
+  width: 100%; background: #1e1e1e; border: 1.5px solid rgba(255,140,0,0.3);
+  color: var(--orange); font-weight: 700; font-size: 13px; padding: 12px;
+  border-radius: 8px; cursor: pointer; margin-bottom: 14px; transition: background 0.2s;
+}
+.btn-camera:hover { background: rgba(255,140,0,0.1); }
+.btn-camera.active { background: var(--rouge); border-color: var(--rouge); color: white; }
+#qr-reader { margin-bottom: 16px; border-radius: 10px; overflow: hidden; display: none; }
+#qr-reader video { border-radius: 10px; width: 100% !important; }
+  .scan-hint code {
+    background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.55);
+    padding: 1px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+  }
+  .demo-codes-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 4px; }
+  .demo-code-chip {
+    background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.45);
+    font-family: 'JetBrains Mono', monospace; font-size: 10.5px; padding: 5px 10px;
+    border-radius: 5px; cursor: pointer; transition: all 0.15s;
+  }
+  .demo-code-chip:hover { border-color: rgba(255,140,0,0.4); color: var(--orange); }
+
+  /* Écran résultat */
+  .scan-result {
+    margin-top: 22px; border-radius: 10px; padding: 22px;
+    border: 1.5px solid rgba(255,255,255,0.08); background: #0d0d0d;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .scan-result.state-idle { text-align: center; color: rgba(255,255,255,0.3); font-size: 13px; padding: 38px 22px; }
+  .scan-result.state-valid { border-color: rgba(46,204,113,0.4); background: rgba(46,204,113,0.07); }
+  .scan-result.state-error { border-color: rgba(192,57,43,0.45); background: rgba(192,57,43,0.08); }
+  .scan-result.state-used { border-color: rgba(241,196,15,0.4); background: rgba(241,196,15,0.06); }
+  .scan-result.state-fraude { border-color: rgba(162,89,255,0.5); background: rgba(162,89,255,0.08); }
+  .scan-result.state-fraude .scan-result-badge { color: #a259ff; }
+  .scan-result-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 15px;
+    letter-spacing: 0.3px; margin-bottom: 14px;
+  }
+  .scan-result.state-valid .scan-result-badge { color: var(--vert); }
+  .scan-result.state-error .scan-result-badge { color: var(--rouge); }
+  .scan-result.state-used .scan-result-badge { color: var(--ambre); }
+
+  .scan-detail-row { display: flex; justify-content: space-between; font-size: 13px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.55); }
+  .scan-detail-row:last-child { border-bottom: none; }
+  .scan-detail-row strong { color: white; font-weight: 700; }
+  .scan-solde-due {
+    font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 20px; color: var(--orange);
+  }
+
+  .btn-encaisser {
+    width: 100%; margin-top: 18px; background: var(--vert); color: #06210f;
+    border: none; border-radius: 8px; padding: 14px; font-weight: 800;
+    font-size: 13.5px; letter-spacing: 0.3px; cursor: pointer; transition: background 0.2s;
+  }
+  .btn-encaisser:hover { background: #27ae60; }
+
+  .billet-genere {
+    margin-top: 16px; background: #0d0d0d; border: 1px solid rgba(255,140,0,0.3);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .billet-genere-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,140,0,0.6); margin-bottom: 8px; }
+  .billet-genere-code { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 15px; color: var(--orange); letter-spacing: 1px; word-break: break-all; }
+
+  /* Historique scans */
+  .scan-history-card { background: #161616; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 22px 24px; }
+  .scan-history-title { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 14.5px; color: white; margin-bottom: 16px; }
+  .history-row { display: flex; align-items: center; gap: 12px; padding: 11px 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 12.5px; }
+  .history-row:last-child { border-bottom: none; }
+  .history-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .history-dot.valid { background: var(--vert); }
+  .history-dot.error { background: var(--rouge); }
+  .history-dot.used { background: var(--ambre); }
+  .history-dot.fraude { background: #a259ff; }
+  .history-time { font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.35); font-size: 11px; width: 56px; flex-shrink: 0; }
+  .history-code { font-family: 'JetBrains Mono', monospace; color: rgba(255,255,255,0.7); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-status { font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .history-status.valid { color: var(--vert); }
+  .history-status.error { color: var(--rouge); }
+  .history-status.used { color: var(--ambre); }
+  .history-status.fraude { color: #a259ff; }
+  .history-empty { color: rgba(255,255,255,0.25); font-size: 12.5px; text-align: center; padding: 20px 0; }
+  .scan-detail-row {
+    flex-wrap: wrap; row-gap: 4px; word-break: break-word;
+  }
+  .scan-detail-row strong { min-width: 0; text-align: right; word-break: break-all; }
+
+  .scan-result, .scan-history-card, .scan-card { overflow-x: hidden; }
+  .scan-result-badge { flex-wrap: wrap; }
+
+  .history-row { flex-wrap: wrap; row-gap: 4px; }
+  .history-code { flex: 1 1 100%; order: 3; }
+  .history-status { flex: 1 1 auto; }
+
+  .billet-genere-code { font-size: 12px; }
+
+  @media (max-width: 900px) {
+  .admin-sidebar {
+    position: fixed; bottom: 0; left: 0; top: auto; width: 100%; height: auto;
+    flex-direction: row; padding: 6px 4px; z-index: 500;
+    border-right: none; border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .sidebar-logo-wrap { display: none; }
+  .admin-nav {
+    display: flex; flex: 1; padding: 0; gap: 2px; overflow-x: auto;
+  }
+  .admin-nav-section-label { display: none; }
+  .admin-nav-link {
+    flex-direction: column; gap: 2px; font-size: 10px; padding: 6px 8px;
+    white-space: nowrap; flex: 1; justify-content: center; text-align: center;
+  }
+  .admin-sidebar-footer {
+    margin: 4px 0 4px 6px; border-top: none; border-left: 1px solid rgba(255,255,255,0.1);
+    padding: 4px 4px 4px 10px; flex-shrink: 0; display: flex; align-items: center;
+  }
+  .btn-logout { padding: 0; font-size: 18px; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+  .btn-logout .lbl { display: none; }
+
+  .admin-main { margin-left: 0; padding: 20px 16px 90px; }
+
+  .admin-view-header { flex-direction: column; align-items: flex-start; }
+  .week-badge { width: 100%; text-align: center; }
+
+  .mode-toggle { width: 100%; }
+  .mode-toggle button { flex: 1; }
+
+  .form-grid-2 { grid-template-columns: 1fr; }
+  .stats-grid { grid-template-columns: 1fr; }
+
+  .jour-heure-row { flex-wrap: wrap; }
+  .jour-heure-input { flex: 1; min-width: 90px; }
+
+  /* Tableau programme → cartes empilées */
+  /* Tableau programme → cartes flex */
+  .prog-table thead { display: none; }
+  .prog-table, .prog-table tbody { display: block; width: 100%; }
+  .prog-table tr {
+    display: flex; flex-wrap: wrap; align-items: center;
+    row-gap: 8px; column-gap: 12px;
+    background: #161616; border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 14px; margin-bottom: 10px;
+  }
+  .prog-table td { display: block; border-bottom: none; padding: 0; }
+
+  /* vignette */
+  .prog-table td:first-child { flex: 0 0 auto; }
+  .prog-thumb { float: none; margin: 0; }
+
+  /* titre + genre (2ᵉ colonne) — prend l'espace restant sur la 1ère ligne */
+  .prog-table td:nth-child(2) { flex: 1 1 auto; min-width: 0; }
+
+  /* colonnes du milieu (diffusion / lieu / date / tarif) — passent sous la 1ère ligne */
+  .prog-table td:nth-child(n+3):not(:last-child) {
+    flex: 1 1 auto; font-size: 11.5px; color: rgba(255,255,255,0.55);
+    padding-left: 52px; /* aligne sous le titre, pas sous la vignette */
+  }
+
+  /* bouton Supprimer — sa propre ligne, aligné à droite */
+  .prog-table td:last-child {
+    flex: 0 0 100%; display: flex; justify-content: flex-end;
+  }
+
+  .admin-view-header { text-align: center; align-items: center; }
+  .admin-view-title, .admin-view-sub { width: 100%; }
+
+  .btn-validate { display: block; margin-left: auto; margin-right: auto; }
+
+  .scan-card, .scan-history-card { text-align: center; }
+  .scan-input-row { flex-direction: column; }
+  .btn-scan { padding: 12px; }
+  .demo-codes-row { justify-content: center; }
+  .label-sm { text-align: center; }
+
+  .caisse-layout { grid-template-columns: 1fr !important; }
+  .scan-card, .scan-history-card { width: 100%; box-sizing: border-box; }
+  .admin-main { overflow-x: hidden; }
+}
+/* ── Modal édition ─────────────────────────────────────── */
+.edit-modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+  z-index:3000; align-items:center; justify-content:center; backdrop-filter:blur(6px);
+}
+.edit-modal-overlay.open { display:flex; }
+.edit-modal-box {
+  background:#161616; border:1px solid rgba(255,255,255,0.1); border-radius:14px;
+  padding:32px; width:92%; max-width:720px; max-height:90vh; overflow-y:auto; overflow-x:hidden;
+}
+.edit-modal-box .jour-heure-row {
+  flex-wrap: wrap;
+}
+.edit-modal-box .jour-heure-row input,
+.edit-modal-box .jour-heure-row select {
+  flex: 1 1 100px;
+  min-width: 0;
+}
+.edit-modal-box .seance-edit-date { flex: 1 1 100%; order: 3; }
+.edit-modal-box .jour-heure-row .seance-edit-heure { order: 1; }
+.edit-modal-box .jour-heure-row .seance-edit-langue,
+.edit-modal-box .jour-heure-row .seance-edit-ville { order: 2; }
+.edit-modal-box .jour-heure-row .btn-row-action { order: 4; }
+.edit-modal-box .jour-heure-row .seance-edit-langue,
+.edit-modal-box .jour-heure-row .seance-edit-ville { flex: 0 1 60px; min-width: 60px; }
+.edit-modal-box .seance-edit-ville { flex: 0 1 52px; }
+.edit-modal-box .tarif-edit-label { flex: 2 1 150px; }
+.edit-modal-box .tarif-edit-prix { flex: 1 1 100px; }
+.edit-modal-title { font-family:'Montserrat',sans-serif; font-weight:800; font-size:18px; color:white; margin-bottom:20px; }
+.edit-modal-actions { display:flex; gap:12px; margin-top:20px; }
+.btn-edit-cancel { flex:1; background:transparent; color:rgba(255,255,255,0.5); border:1px solid rgba(255,255,255,0.15); border-radius:8px; padding:12px; font-weight:600; font-size:13px; cursor:pointer; }
+.btn-edit-cancel:hover { border-color:rgba(255,255,255,0.35); color:white; }
+.page-curtain { position: fixed; inset: 0; z-index: 9999; background: linear-gradient(135deg, var(--orange-dark), var(--orange)); display: flex; align-items: center; justify-content: center; transition: opacity 0.5s ease, visibility 0.5s ease; }
+.page-curtain img { width: 130px; animation: curtainPulse 1.4s ease-in-out infinite; }
+@keyframes curtainPulse { 0%,100% { transform: scale(1); opacity: 0.9; } 50% { transform: scale(1.08); opacity: 1; } }
+.page-curtain.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+
+</style>
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+</head>
+<body>
+  <div class="page-curtain" id="page-curtain">
+    <img src="images/logo.png" alt="CinéScène">
+  </div>
+
+<div class="admin-shell">
+
+  <!-- ═══ SIDEBAR ════════════════════════════════════════ -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-logo-wrap">
+      <img src="images/logo.png" alt="CinéScène">
+    </div>
+
+    <nav class="admin-nav">
+      <div class="admin-nav-section-label">Programme de la semaine</div>
+      <a class="admin-nav-link active" data-view="films" onclick="switchView('films')"><i data-ico="film"></i> Films</a>
+      <a class="admin-nav-link" data-view="events" onclick="switchView('events')"><i data-ico="sparkles"></i> Événements</a>
+
+      <div class="admin-nav-section-label">Comptoir</div>
+      <a class="admin-nav-link" data-view="caisse" onclick="switchView('caisse')"><i data-ico="ticket"></i> Caisse &amp; Scans</a>
+      <a class="admin-nav-link" data-view="stock" onclick="switchView('stock')"><i data-ico="package"></i> Stock &amp; Places</a>
+
+      <div class="admin-nav-section-label">Suivi</div>
+      <a class="admin-nav-link" data-view="stats" onclick="switchView('stats')"><i data-ico="chart"></i> Statistiques</a>
+      <a class="admin-nav-link" data-view="clients" onclick="switchView('clients')"><i data-ico="receipt"></i> Historique clients</a>
+    </nav>
+
+    <div class="admin-sidebar-footer">
+      <button class="btn-logout" onclick="deconnecterAdmin()"><i data-ico="logout"></i> <span class="lbl">Déconnexion</span></button>
+    </div>
+  </aside>
+
+  <!-- ═══ CONTENU ════════════════════════════════════════ -->
+  <main class="admin-main">
+
+    <!-- ───────── VUE FILMS ───────── -->
+    <section class="admin-view active" id="view-films">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Programme — Films</div>
+          <div class="admin-view-sub">Ajoutez les films diffusés cette semaine.</div>
+        </div>
+        <div class="week-badge" id="week-badge-films">Semaine du 9 au 15 juin 2026</div>
+      </div>
+
+      <!-- Saisie manuelle -->
+      <div class="mode-panel active" id="film-mode-manual">
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Titre</label>
+            <input class="form-input" id="manual-film-titre" placeholder="Ex. MICHAEL">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Genre</label>
+            <input class="form-input" id="manual-film-genre" placeholder="Ex. Biographie / Musique">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Synopsis</label>
+          <textarea class="form-textarea" id="manual-film-synopsis" placeholder="Résumé du film…"></textarea>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Acteurs</label>
+            <input class="form-input" id="manual-film-acteurs" placeholder="Nom 1, Nom 2, Nom 3">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Durée</label>
+            <input class="form-input" id="manual-film-duree" placeholder="Ex. 1h50">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Âge minimum (laisser vide si tout public)</label>
+          <input class="form-input" type="number" id="manual-film-age" placeholder="Ex. 12" min="0" max="18">
+        </div>
+        <div class="form-row">
+          <label class="libre-check">
+            <input type="checkbox" id="manual-film-nouveau"> Marquer comme "Nouveauté"
+          </label>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Type de tarif</label>
+          <div class="chip-row" id="manual-film-tarif">
+            <button type="button" class="chip-btn selected" data-value="standard" onclick="selectChip(this)">Standard</button>
+            <button type="button" class="chip-btn" data-value="avant-premiere" onclick="selectChip(this)">Première</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Affiche portrait (card)</label>
+          <input class="form-input" type="file" id="manual-film-poster" accept="image/*">
+        </div>
+        <div class="form-row">
+          <label class="form-label">Image paysage (carrousel)</label>
+          <input class="form-input" type="file" id="manual-film-landscape" accept="image/*">
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Bande-annonce (optionnel)</label>
+            <input class="form-input" type="file" id="manual-film-trailer" accept="video/*">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Sous-titres (optionnel)</label>
+            <input class="form-input" type="file" id="manual-film-subtitle" accept=".srt,.vtt,.ass">
+          </div>
+        </div>
+      </div>
+
+      <!-- Jours / heures (partagé entre les deux modes) -->
+      <div style="margin-top:26px;">
+        <div class="label-sm">Jours et heures de diffusion</div>
+        <div class="jours-heures-grid" id="film-jours-heures"></div>
+      </div>
+      <button class="btn-validate" id="btn-validate-film" onclick="validateFilmImport()">Ajouter au programme de la semaine</button>
+
+      <!-- Liste programmée -->
+      <div class="prog-table-wrap">
+        <div class="label-sm">Films programmés cette semaine</div>
+        <table class="prog-table">
+          <thead>
+            <tr><th></th><th>Film</th><th>Diffusion</th><th>Tarif</th><th></th></tr>
+          </thead>
+          <tbody id="films-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ───────── VUE ÉVÉNEMENTS ───────── -->
+    <section class="admin-view" id="view-events">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Programme — Événements</div>
+          <div class="admin-view-sub">Ajoutez un événement exceptionnel (concert, spectacle, séminaire, salon…).</div>
+        </div>
+        <div class="week-badge" id="week-badge-events">Semaine du 9 au 15 juin 2026</div>
+      </div>
+
+      <!-- Saisie manuelle -->
+      <div class="mode-panel active" id="event-mode-manual">
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Titre</label>
+            <input class="form-input" id="manual-event-titre" placeholder="Ex. FALLY IPUPA EN CONCERT">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Type</label>
+            <input class="form-input" id="manual-event-type" placeholder="Ex. Concert, Spectacle, Séminaire…" onblur="verifierTypeConcert(this)">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Description</label>
+          <textarea class="form-textarea" id="manual-event-description" placeholder="Présentation de l'événement…"></textarea>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Lieu</label>
+          <div class="chip-row" id="manual-event-ville">
+            <button type="button" class="chip-btn" data-value="PN" onclick="selectChip(this)"><i data-ico="pin"></i> Pointe-Noire</button>
+            <button type="button" class="chip-btn" data-value="BZ" onclick="selectChip(this)"><i data-ico="pin"></i> Brazzaville</button>
+            <button type="button" class="chip-btn" data-value="both" onclick="selectChip(this)"><i data-ico="pin"></i> Les deux</button>
+          </div>
+        </div>
+        <div class="form-grid-2">
+          <div class="form-row">
+            <label class="form-label">Date</label>
+            <input class="form-input" type="date" id="manual-event-date">
+          </div>
+          <div class="form-row">
+            <label class="form-label">Heure</label>
+            <input class="form-input" type="time" id="manual-event-heure">
+          </div>
+        </div>
+        <div class="form-row">
+          <label class="libre-check">
+            <input type="checkbox" id="manual-event-libre" onchange="toggleEventTarif(this)"> Entrée libre (gratuit)
+          </label>
+        </div>
+        <div class="form-row" id="manual-event-tarifs-block">
+          <label class="form-label">Tarifs</label>
+          <div class="jours-heures-grid" id="manual-event-tarifs-list"></div>
+          <button type="button" class="btn-row-action" style="margin-top:10px;" onclick="ajouterLigneTarifEvent()">+ Ajouter un tarif</button>
+        </div>
+        <div class="form-row">
+          <label class="form-label">Affiche portrait</label>
+          <input class="form-input" type="file" id="manual-event-poster" accept="image/*">
+        </div>
+      </div>
+
+      <button class="btn-validate" onclick="validateEventImport()">Ajouter au programme de la semaine</button>
+
+      <!-- Liste programmée -->
+      <div class="prog-table-wrap">
+        <div class="label-sm">Événements programmés cette semaine</div>
+        <table class="prog-table">
+          <thead>
+            <tr><th></th><th>Événement</th><th>Lieu</th><th>Date</th><th>Tarif</th><th></th></tr>
+          </thead>
+          <tbody id="events-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ───────── VUE CAISSE & SCANS ───────── -->
+    <section class="admin-view" id="view-caisse">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Caisse & Scans</div>
+          <div class="admin-view-sub">Validation des billets au comptoir — scan du ticket de solde et encaissement.</div>
+        </div>
+        <div class="week-badge" id="week-badge-caisse">Semaine du 9 au 15 juin 2026</div>
+      </div>
+
+      <div class="caisse-layout">
+
+        <!-- Colonne scanner -->
+        <div class="scan-card">
+          <div class="label-sm">Scanner un ticket</div>
+          <button class="btn-camera" id="btn-toggle-camera" onclick="toggleCamera()"><i data-ico="camera"></i> Activer la caméra</button>
+          <div id="qr-reader"></div>
+          <div class="scan-input-row">
+            <input class="scan-input" id="scan-code-input" placeholder="cp_tk_xxxxxxxxxx" autocomplete="off">
+            <button class="btn-scan" onclick="simulerScan()"><i data-ico="camera"></i> Scanner</button>
+          </div>
+          <div class="scan-hint">
+            <!-- Simulateur d'appareil photo — en production, ce champ sera remplacé par la lecture caméra (<code>html5-qrcode</code>) qui extrait automatiquement le jeton du QR code.-->
+          </div>
+
+          <div class="label-sm" style="margin-top:18px;">Codes de démonstration</div>
+          <div class="demo-codes-row" id="demo-codes-row"></div>
+
+          <!-- Résultat du scan -->
+          <div class="scan-result state-idle" id="scan-result">
+            En attente d'un scan…
+          </div>
+        </div>
+
+        <!-- Colonne historique -->
+        <div class="scan-history-card">
+          <div class="scan-history-title">Historique des scans — session en cours</div>
+          <div id="scan-history-list">
+            <div class="history-empty">Aucun scan effectué pour le moment.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ───────── VUE STOCK & PLACES ───────── -->
+    <section class="admin-view" id="view-stock">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Stock & Places disponibles</div>
+          <div class="admin-view-sub">Places restantes en temps réel — ajustez manuellement pour une vente ou une annulation au guichet.</div>
+        </div>
+        <div class="week-badge" id="stock-ville-badge"><i data-ico="pin"></i> Détection…</div>
+      </div>
+      <div class="chip-row" id="stock-ville-toggle" style="margin-bottom:22px;">
+        <button type="button" class="chip-btn" data-value="PN" onclick="selectVilleStock('PN', this)"><i data-ico="pin"></i> Pointe-Noire</button>
+        <button type="button" class="chip-btn" data-value="BZ" onclick="selectVilleStock('BZ', this)"><i data-ico="pin"></i> Brazzaville</button>
+      </div>
+
+      <div class="label-sm">Films — séances de la semaine</div>
+      <div id="stock-films-list" style="margin-bottom:32px;"></div>
+
+      <div class="label-sm">Événements</div>
+      <div id="stock-events-list"></div>
+    </section>
+
+    <!-- ───────── VUE STATISTIQUES ───────── -->
+    <section class="admin-view" id="view-stats">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Statistiques</div>
+          <div class="admin-view-sub">Films uniquement — un billet compte une fois le paiement intégralement réglé.</div>
+        </div>
+        <div class="week-badge" id="week-badge-stats">Semaine du 9 au 15 juin 2026</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stats-card">
+          <div class="stats-card-title"><i data-ico="trophy"></i> Les plus regardés</div>
+          <div id="rank-billets"></div>
+          <div class="stats-card-note">Classement par nombre de billets vendus, toutes catégories de tarif confondues (standard, enfant, étudiant, avant-première).</div>
+        </div>
+        <div class="stats-card">
+          <div class="stats-card-title"><i data-ico="coins"></i> Les plus rémunérateurs</div>
+          <div id="rank-recette"></div>
+          <div class="stats-card-note">Classement par recette générée. Un film très fréquenté en tarif réduit peut rapporter moins qu'un film moins fréquenté en avant-première.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────── VUE HISTORIQUE CLIENTS ───────── -->
+    <section class="admin-view" id="view-clients">
+      <div class="admin-view-header">
+        <div>
+          <div class="admin-view-title">Historique clients</div>
+          <div class="admin-view-sub">Toutes les commandes en temps réel — pseudo, jour, heure, nature, statut de paiement.</div>
+        </div>
+        <div class="week-badge"><i data-ico="refresh"></i> Actualisation auto (15s)</div>
+      </div>
+      <div class="cli-hist-table-wrap">
+        <table class="cli-hist-table">
+          <thead>
+            <tr><th>Client</th><th>Commande</th><th>Ville</th><th>Date &amp; heure</th><th>Statut</th><th>Montant</th></tr>
+          </thead>
+          <tbody id="cli-hist-body"><tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.35);">Chargement…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+<!-- ═══ MODAL ÉDITION FILM ═══════════════════════════════ -->
+<div class="edit-modal-overlay" id="edit-film-modal">
+  <div class="edit-modal-box">
+    <div class="edit-modal-title">Modifier le film</div>
+    <div class="form-grid-2">
+      <div class="form-row"><label class="form-label">Titre</label><input class="form-input" id="edit-film-titre"></div>
+      <div class="form-row"><label class="form-label">Genre</label><input class="form-input" id="edit-film-genre"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Synopsis</label><textarea class="form-textarea" id="edit-film-synopsis"></textarea></div>
+    <div class="form-grid-2">
+      <div class="form-row"><label class="form-label">Acteurs</label><input class="form-input" id="edit-film-acteurs"></div>
+      <div class="form-row"><label class="form-label">Durée</label><input class="form-input" id="edit-film-duree"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Âge minimum (laisser vide si tout public)</label>
+      <input class="form-input" type="number" id="edit-film-age" min="0" max="18">
+    </div>
+    <div class="form-row">
+      <label class="libre-check">
+        <input type="checkbox" id="edit-film-nouveau"> Marquer comme Nouveauté
+      </label>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Type de tarif</label>
+      <div class="chip-row" id="edit-film-tarif">
+        <button type="button" class="chip-btn" data-value="standard" onclick="selectChip(this)">Standard</button>
+        <button type="button" class="chip-btn" data-value="avant-premiere" onclick="selectChip(this)">Première</button>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label class="form-label">Nouvelle affiche portrait (optionnel)</label><input class="form-input" type="file" id="edit-film-poster" accept="image/*"></div>
+      <div class="form-row"><label class="form-label">Nouvelle image paysage (optionnel)</label><input class="form-input" type="file" id="edit-film-landscape" accept="image/*"></div>
+    </div>
+    <div class="form-row">
+      <label class="form-label">Nouvelle bande-annonce (optionnel)</label>
+      <input class="form-input" type="file" id="edit-film-trailer" accept="video/*">
+    </div>
+    <div class="form-row">
+      <label class="form-label">Séances (jour / heure / langue / ville)</label>
+      <div class="jours-heures-grid" id="edit-film-seances-list"></div>
+      <button type="button" class="btn-row-action" style="margin-top:10px;" onclick="ajouterLigneSeanceEdit()">+ Ajouter une séance</button>
+     </div>
+    <div class="edit-modal-actions">
+      <button class="btn-edit-cancel" onclick="fermerModifFilm()">Annuler</button>
+      <button class="btn-validate" style="flex:2;margin-top:0;" onclick="soumettreModifFilm()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ÉDITION ÉVÉNEMENT ══════════════════════════ -->
+<div class="edit-modal-overlay" id="edit-event-modal">
+  <div class="edit-modal-box">
+    <div class="edit-modal-title">Modifier l'événement</div>
+    <div class="form-grid-2">
+      <div class="form-row"><label class="form-label">Titre</label><input class="form-input" id="edit-event-titre"></div>
+      <div class="form-row"><label class="form-label">Type</label><input class="form-input" id="edit-event-type"></div>
+    </div>
+    <div class="form-row"><label class="form-label">Description</label><textarea class="form-textarea" id="edit-event-description"></textarea></div>
+    <div class="form-row">
+      <label class="form-label">Lieu</label>
+      <div class="chip-row" id="edit-event-ville">
+        <button type="button" class="chip-btn" data-value="PN" onclick="selectChip(this)"><i data-ico="pin"></i> Pointe-Noire</button>
+        <button type="button" class="chip-btn" data-value="BZ" onclick="selectChip(this)"><i data-ico="pin"></i> Brazzaville</button>
+        <button type="button" class="chip-btn" data-value="both" onclick="selectChip(this)"><i data-ico="pin"></i> Les deux</button>
+      </div>
+    </div>
+    <div class="form-grid-2">
+      <div class="form-row"><label class="form-label">Date</label><input class="form-input" type="date" id="edit-event-date"></div>
+      <div class="form-row"><label class="form-label">Heure</label><input class="form-input" type="time" id="edit-event-heure"></div>
+    </div>
+    <div class="form-row">
+      <label class="libre-check"><input type="checkbox" id="edit-event-libre"> Entrée libre (gratuit)</label>
+    </div>
+    <div class="form-row"><label class="form-label">Nouvelle affiche (optionnel)</label><input class="form-input" type="file" id="edit-event-poster" accept="image/*"></div>
+    <div class="form-row">
+      <label class="form-label">Tarifs</label>
+      <div class="jours-heures-grid" id="edit-event-tarifs-list"></div>
+    <button type="button" class="btn-row-action" style="margin-top:10px;" onclick="ajouterLigneTarifEventEdit()">+ Ajouter un tarif</button>
+</div>
+    <div class="edit-modal-actions">
+      <button class="btn-edit-cancel" onclick="fermerModifEvent()">Annuler</button>
+      <button class="btn-validate" style="flex:2;margin-top:0;" onclick="soumettreModifEvent()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ════════════════════════════════════════════════════════
+   ÉTAT GLOBAL
+   ════════════════════════════════════════════════════════ */
+  const API_BASE = '/api';
+
+
+function getCookie(name) {
+  const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return match ? match.pop() : '';
+}
+
+async function getCsrfToken() {
+  await fetch(`${API_BASE}/tarifs-film/`, { credentials: 'include' });
+  return getCookie('csrftoken');
+}
+const JOURS = ['Mar','Mer','Jeu','Ven','Sam','Dim'];
+
+let filmMode = 'drop';
+let eventMode = 'drop';
+let filmCandidates = [];
+let eventCandidates = [];
+
+const ROLE_LABELS = {
+  portrait:  { icon: ico('image'), cls: 'detected-ok' },
+  landscape: { icon: ico('image'), cls: 'detected-ok' },
+  ambigu:    { icon: ico('alert'), cls: 'detected-warn' },
+  info:      { icon: ico('file'), cls: 'detected-ok' },
+  trailer:   { icon: ico('film'), cls: 'detected-ok' },
+  video:     { icon: ico('video'), cls: 'detected-warn' },
+  audio:     { icon: ico('headphones'), cls: 'detected-ok' },
+  subtitle:  { icon: ico('message'), cls: 'detected-ok' },
+  unknown:   { icon: ico('help'), cls: 'detected-warn' },
+};
+const FILM_ROLE_OPTIONS = [
+  ['portrait','Affiche portrait → card'],
+  ['landscape','Image paysage → carrousel'],
+  ['info','Fichier info'],
+  ['trailer','Bande-annonce'],
+  ['audio','Piste audio'],
+  ['subtitle','Sous-titres'],
+  ['ambigu','Ratio ambigu — à choisir'],
+  ['unknown','Ignorer'],
+];
+const EVENT_ROLE_OPTIONS = [
+  ['portrait','Affiche portrait'],
+  ['info','Fichier info'],
+  ['ambigu','Ratio ambigu — à choisir'],
+  ['unknown','Ignorer'],
+];
+
+
+
+/* ════════════════════════════════════════════════════════
+   NAVIGATION
+   ════════════════════════════════════════════════════════ */
+function switchView(view) {
+  if (view !== 'caisse' && cameraActive) toggleCamera(); // libère la caméra en quittant l'onglet
+  document.querySelectorAll('.admin-view').forEach(v => v.classList.remove('active'));
+  document.getElementById('view-' + view).classList.add('active');
+  document.querySelectorAll('.admin-nav-link').forEach(l => l.classList.toggle('active', l.dataset.view === view));
+  if (view === 'stock') chargerStockDepuisAPI();
+  if (view === 'caisse') chargerHistoriqueScans();
+
+  clearInterval(intervalHistoriqueClients);
+  if (view === 'clients') {
+    chargerHistoriqueClients();
+    intervalHistoriqueClients = setInterval(chargerHistoriqueClients, 15000);
+  }
+}
+
+function setMode(context, mode, btn) {
+  if (context === 'film') filmMode = mode; else eventMode = mode;
+  btn.parentElement.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(context + '-mode-drop').classList.toggle('active', mode === 'drop');
+  document.getElementById(context + '-mode-manual').classList.toggle('active', mode === 'manual');
+}
+
+function selectChip(btn) {
+  btn.parentElement.querySelectorAll('.chip-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+function toggleEventTarif(checkbox) {
+  const bloc = document.getElementById('manual-event-tarifs-block');
+  bloc.style.display = checkbox.checked ? 'none' : 'block';
+}
+
+function ajouterLigneTarifEvent() {
+  const list = document.getElementById('manual-event-tarifs-list');
+  const row = document.createElement('div');
+  row.className = 'jour-heure-row';
+  row.innerHTML = `
+    <input class="form-input tarif-event-label" placeholder="Ex: Standard, VIP" style="flex:1;">
+    <input class="form-input tarif-event-prix" type="number" placeholder="Prix FCFA" style="max-width:140px;">
+    <input class="form-input tarif-event-places" type="number" value="296" min="1" style="max-width:100px;" title="Places disponibles">
+    <button type="button" class="btn-row-action danger" onclick="this.closest('.jour-heure-row').remove()">${ico('x')}</button>
+  `;
+  list.appendChild(row);
+}
+
+function verifierTypeConcert(input) {
+  const estConcert = input.value.trim().toLowerCase() === 'concert';
+  const chipDeux = document.querySelector('#manual-event-ville .chip-btn[data-value="both"]');
+  if (!chipDeux) return;
+
+  chipDeux.style.display = estConcert ? 'none' : '';
+
+  if (estConcert && chipDeux.classList.contains('selected')) {
+    chipDeux.classList.remove('selected');
+  }
+}
+
+function getTarifsEvent() {
+  const rows = document.querySelectorAll('#manual-event-tarifs-list .jour-heure-row');
+  const tarifs = [];
+  rows.forEach(r => {
+    const label = r.querySelector('.tarif-event-label').value.trim();
+    const prix = r.querySelector('.tarif-event-prix').value;
+    const places = parseInt(r.querySelector('.tarif-event-places').value, 10) || 296;
+    if (label && prix) tarifs.push({ label, prix: parseInt(prix, 10), places });
+  });
+  return tarifs;
+}
+
+/* ════════════════════════════════════════════════════════
+   JOURS / HEURES (films)
+   ════════════════════════════════════════════════════════ */
+function buildJoursHeures(containerId) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = JOURS.map(j => `
+    <div class="jour-heure-row">
+      <label class="jour-check">
+        <input type="checkbox" value="${j}" onchange="toggleJourHeure(this)">
+        <span>${j}</span>
+      </label>
+      <input type="time" class="jour-heure-input" disabled>
+      <input type="number" class="jour-heure-input jour-places-input" value="296" min="1" disabled style="margin-left:8px;max-width:80px;" title="Places disponibles">
+      <select class="jour-heure-input jour-langue-select" disabled style="margin-left:8px;">
+        <option value="VF">VF</option>
+        <option value="VO">VO</option>
+        <option value="VOSTFR">VOSTFR</option>
+      </select>
+      <select class="jour-heure-input jour-ville-select" disabled style="margin-left:8px;">
+        <option value="both" selected>PN + BZ</option>
+        <option value="PN">PN</option>
+        <option value="BZ">BZ</option>
+      </select>
+    </div>
+  `).join('');
+}
+
+function toggleJourHeure(checkbox) {
+  const row = checkbox.closest('.jour-heure-row');
+  const timeInput = row.querySelector('input[type="time"]');
+  const placesInput = row.querySelector('.jour-places-input');
+  const langueSelect = row.querySelector('.jour-langue-select');
+  const villeSelect = row.querySelector('.jour-ville-select');
+  timeInput.disabled = !checkbox.checked;
+  placesInput.disabled = !checkbox.checked;
+  langueSelect.disabled = !checkbox.checked;
+  villeSelect.disabled = !checkbox.checked;
+  if (!checkbox.checked) timeInput.value = '';
+}
+
+
+function getJoursHeures(containerId) {
+  const rows = document.querySelectorAll('#' + containerId + ' .jour-heure-row');
+  const result = [];
+  rows.forEach(r => {
+    const cb = r.querySelector('input[type=checkbox]');
+    const time = r.querySelector('input[type="time"]');
+    const langue = r.querySelector('.jour-langue-select');
+    const ville = r.querySelector('.jour-ville-select');
+    const places = r.querySelector('.jour-places-input');
+    if (cb.checked) result.push({ jour: cb.value, heure: time.value || '—', langue: langue.value, ville: ville.value, places: parseInt(places.value, 10) || 296 });
+  });
+  return result;
+}
+
+/* ════════════════════════════════════════════════════════
+   GLISSER-DÉPOSER + DÉTECTION AUTOMATIQUE
+   ════════════════════════════════════════════════════════ */
+function initDropzone(zoneId, inputId, context) {
+  const zone = document.getElementById(zoneId);
+  const input = document.getElementById(inputId);
+
+  zone.addEventListener('click', () => input.click());
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('dragover'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+  zone.addEventListener('drop', async e => {
+    e.preventDefault();
+    zone.classList.remove('dragover');
+    let files = [];
+    try {
+      if (e.dataTransfer.items && e.dataTransfer.items.length && e.dataTransfer.items[0].webkitGetAsEntry) {
+        files = await getAllFileEntries(e.dataTransfer.items);
+      } else {
+        files = Array.from(e.dataTransfer.files);
+      }
+    } catch (err) {
+      files = Array.from(e.dataTransfer.files);
+    }
+    await processDroppedFiles(files, context);
+  });
+
+  input.addEventListener('change', async e => {
+    const files = Array.from(e.target.files);
+    await processDroppedFiles(files, context);
+  });
+}
+
+/* Lecture récursive d'un dossier déposé (API File System Entry) */
+function getAllFileEntries(dataTransferItemList) {
+  return new Promise(async (resolve) => {
+    let queue = [];
+    for (let i = 0; i < dataTransferItemList.length; i++) {
+      const item = dataTransferItemList[i];
+      const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
+      if (entry) queue.push(entry);
+    }
+    const fileEntries = [];
+    while (queue.length > 0) {
+      const entry = queue.shift();
+      if (entry.isFile) {
+        const file = await new Promise(res => entry.file(res));
+        fileEntries.push(file);
+      } else if (entry.isDirectory) {
+        const reader = entry.createReader();
+        const entries = await readAllEntries(reader);
+        queue.push(...entries);
+      }
+    }
+    resolve(fileEntries);
+  });
+}
+function readAllEntries(reader) {
+  return new Promise((resolve) => {
+    let all = [];
+    (function readBatch() {
+      reader.readEntries((entries) => {
+        if (entries.length === 0) { resolve(all); }
+        else { all = all.concat(entries); readBatch(); }
+      });
+    })();
+  });
+}
+
+
+
+function getImageDims(file) {
+  return new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight, url });
+    img.onerror = () => resolve(null);
+    img.src = url;
+  });
+}
+
+function parseInfoText(text, context) {
+  const keys = context === 'film'
+    ? ['TITRE','GENRE','SYNOPSIS','ACTEURS','DUREE','TARIF_TYPE']
+    : ['TITRE','TYPE','DESCRIPTION','VILLE','DATE','HEURE','TARIF'];
+  const result = {};
+  text.split(/\r?\n/).forEach(line => {
+    const m = line.match(/^([A-ZÉÈÀ_]+)\s*:\s*(.*)$/i);
+    if (m && keys.includes(m[1].toUpperCase())) {
+      result[m[1].toUpperCase()] = m[2].trim();
+    }
+  });
+  return result;
+}
+
+async function processDroppedFiles(files, context) {
+  const list = context === 'film' ? filmCandidates : eventCandidates;
+  list.length = 0;
+
+  for (const file of files) {
+    const ext = (file.name.split('.').pop() || '').toLowerCase();
+    let role = 'unknown';
+    let thumb = null;
+    let parsed = null;
+
+    if (['jpg','jpeg','png','webp'].includes(ext)) {
+      const dims = await getImageDims(file);
+      if (dims) {
+        thumb = dims.url;
+        const ratio = dims.w / dims.h;
+        if (ratio <= 0.85) role = 'portrait';
+        else if (ratio >= 1.2) role = 'landscape';
+        else role = 'ambigu';
+      }
+    } else if (['txt','md'].includes(ext)) {
+      role = 'info';
+      const text = await file.text();
+      parsed = parseInfoText(text, context);
+    } else if (['mp4','mov','mkv','avi'].includes(ext)) {
+      role = /trailer|bande/i.test(file.name) ? 'trailer' : 'video';
+    } else if (['mp3','wav','aac','flac'].includes(ext)) {
+      role = 'audio';
+    } else if (['srt','vtt','ass'].includes(ext)) {
+      role = 'subtitle';
+    }
+
+    list.push({ name: file.name, role, thumb, parsed });
+  }
+  renderCandidates(context);
+}
+
+function renderCandidates(context) {
+  const list = context === 'film' ? filmCandidates : eventCandidates;
+  const panel = document.getElementById(context + '-candidates-panel');
+  const options = context === 'film' ? FILM_ROLE_OPTIONS : EVENT_ROLE_OPTIONS;
+
+  if (list.length === 0) { panel.style.display = 'none'; panel.innerHTML = ''; return; }
+  panel.style.display = 'block';
+
+  const rows = list.map((c, i) => {
+    const meta = ROLE_LABELS[c.role] || ROLE_LABELS.unknown;
+    const thumbHtml = c.thumb
+      ? `<img class="candidate-thumb" src="${c.thumb}" alt="">`
+      : `<div class="candidate-thumb">${meta.icon}</div>`;
+    const optsHtml = options.map(([val, label]) =>
+      `<option value="${val}" ${c.role === val ? 'selected' : ''}>${label}</option>`
+    ).join('');
+    return `
+      <div class="candidate-row">
+        ${thumbHtml}
+        <div class="candidate-name">${c.name}</div>
+        <select class="candidate-role ${meta.cls}" onchange="updateCandidateRole('${context}',${i},this.value)">
+          ${optsHtml}
+        </select>
+      </div>`;
+  }).join('');
+
+  let infoHtml = '';
+  const infoCandidate = list.find(c => c.role === 'info' && c.parsed);
+  if (infoCandidate) {
+    const p = infoCandidate.parsed;
+    const entries = Object.entries(p);
+    if (entries.length) {
+      infoHtml = `
+        <div class="parsed-info-box">
+          <div class="label-sm" style="margin-bottom:10px;">Champs détectés — à vérifier avant validation</div>
+          ${entries.map(([k, v]) => `<div class="parsed-row"><strong>${k}</strong><span>${v || '—'}</span></div>`).join('')}
+        </div>`;
+    }
+  }
+
+  panel.innerHTML = `<div class="label-sm">Fichiers détectés (${list.length})</div>${rows}${infoHtml}`;
+}
+
+function updateCandidateRole(context, idx, value) {
+  const list = context === 'film' ? filmCandidates : eventCandidates;
+  list[idx].role = value;
+  renderCandidates(context);
+}
+
+/* ════════════════════════════════════════════════════════
+   VALIDATION DES IMPORTS
+   ════════════════════════════════════════════════════════ */
+async function validateFilmImport() {
+
+  const titre = document.getElementById('manual-film-titre').value.trim();
+  const genre = document.getElementById('manual-film-genre').value.trim();
+  const synopsis = document.getElementById('manual-film-synopsis').value.trim();
+  const acteurs = document.getElementById('manual-film-acteurs').value.trim();
+  const duree = document.getElementById('manual-film-duree').value.trim();
+  const ageMinimum = document.getElementById('manual-film-age').value.trim();
+  const chip = document.querySelector('#manual-film-tarif .chip-btn.selected');
+  const tarifType = chip ? chip.dataset.value : 'standard';
+  const posterFile = document.getElementById('manual-film-poster').files[0];
+  const landscapeFile = document.getElementById('manual-film-landscape').files[0];
+
+  const jours = getJoursHeures('film-jours-heures');
+
+  if (!titre) { alert("Le titre est obligatoire."); return; }
+  if (jours.length === 0) { alert("Veuillez sélectionner au moins un jour de diffusion."); return; }
+
+  const btn = document.getElementById('btn-validate-film');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Création en cours…';
+
+  try {
+    // 1. Créer le film (avec upload des images via FormData)
+    const formData = new FormData();
+    formData.append('titre', titre.toUpperCase());
+    formData.append('genre', genre || '—');
+    formData.append('synopsis', synopsis);
+    formData.append('acteurs', acteurs);
+    formData.append('duree', duree || '—');
+    formData.append('type_tarif', tarifType.includes('avant') ? 'avant-premiere' : 'standard');
+    formData.append('actif_cette_semaine', 'true');
+    if (ageMinimum) formData.append('age_minimum', ageMinimum);
+    formData.append('nouveau', document.getElementById('manual-film-nouveau').checked ? 'true' : 'false');
+    if (posterFile) formData.append('poster_portrait', posterFile);
+    if (landscapeFile) formData.append('poster_paysage', landscapeFile);
+    const trailerFile = document.getElementById('manual-film-trailer').files[0];
+    if (trailerFile) formData.append('bande_annonce', trailerFile);
+
+    const csrftoken = await getCsrfToken();
+    const filmResponse = await fetch(`${API_BASE}/films/creer/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: formData,
+    });
+
+    if (!filmResponse.ok) {
+      const err = await filmResponse.json();
+      throw new Error(JSON.stringify(err));
+    }
+    const film = await filmResponse.json();
+
+    // 2. Créer une séance par jour sélectionné, PN+BZ si mode "identique"
+    for (const j of jours) {
+  const villes = j.ville === 'both' ? ['PN', 'BZ'] : [j.ville];
+  for (const v of villes) {
+    const seanceRes = await fetch(`${API_BASE}/seances/creer/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+      body: JSON.stringify({
+        film: film.id,
+        jour: jourLabelToDate(j.jour),
+        heure: j.heure + ':00',
+        ville: v,
+        langue: j.langue,
+        places_totales: j.places,
+      }),
+    });
+    if (!seanceRes.ok) {
+      console.error(`Échec création séance ${v}:`, await seanceRes.json());
+    }
+  }
+}
+
+    await chargerFilmsDepuisAPI();
+    resetFilmForm();
+    showToast('Film ajouté au programme de la semaine');
+  } catch (error) {
+    console.error(error);
+    alert('Erreur lors de la création du film : ' + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ajouter au programme de la semaine';
+  }
+}
+
+function jourLabelToDate(label) {
+  // Convertit un jour abrégé (Lun, Mar...) en date réelle de la semaine en cours
+  const joursMap = { 'Lun': 1, 'Mar': 2, 'Mer': 3, 'Jeu': 4, 'Ven': 5, 'Sam': 6, 'Dim': 0 };
+  const aujourdHui = window.CP_DEMO_TODAY || new Date();
+  const jourCible = joursMap[label];
+  const diff = (jourCible - aujourdHui.getDay() + 7) % 7;
+  const date = new Date(aujourdHui);
+  date.setDate(aujourdHui.getDate() + diff);
+  return date.toISOString().split('T')[0];
+}
+
+async function validateEventImport() {
+
+
+  const titre = document.getElementById('manual-event-titre').value.trim();
+  const type = document.getElementById('manual-event-type').value.trim();
+  const description = document.getElementById('manual-event-description').value.trim();
+  const chip = document.querySelector('#manual-event-ville .chip-btn.selected');
+  const ville = chip ? chip.dataset.value : null;
+  const date = document.getElementById('manual-event-date').value;
+  const heure = document.getElementById('manual-event-heure').value;
+  const libre = document.getElementById('manual-event-libre').checked;
+  const posterFile = document.getElementById('manual-event-poster').files[0];
+  const tarifs = libre ? [] : getTarifsEvent();
+
+  if (!titre) { alert("Le titre est obligatoire."); return; }
+  if (!ville) { alert("Veuillez préciser le lieu (PN, BZ ou les deux)."); return; }
+  if (!date || !heure) { alert("Veuillez préciser la date et l'heure."); return; }
+  if (!libre && tarifs.length === 0) { alert("Ajoutez au moins un tarif, ou cochez « Entrée libre »."); return; }
+
+  const btn = document.querySelector('#view-events .btn-validate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Création en cours…';
+
+  try {
+    const formData = new FormData();
+    formData.append('titre', titre.toUpperCase());
+    formData.append('type_evenement', type || '—');
+    formData.append('description', description);
+    formData.append('ville', ville);
+    formData.append('date_event', date);
+    formData.append('heure_event', heure);
+    formData.append('entree_libre', libre ? 'true' : 'false');
+    if (posterFile) formData.append('poster', posterFile);
+
+    const csrftoken = await getCsrfToken();
+    const eventResponse = await fetch(`${API_BASE}/evenements/creer/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: formData,
+    });
+
+    if (!eventResponse.ok) {
+      const err = await eventResponse.json();
+      throw new Error(JSON.stringify(err));
+    }
+    const evenement = await eventResponse.json();
+
+    // Créer les tarifs liés (s'il y en a)
+    for (const t of tarifs) {
+      await fetch(`${API_BASE}/tarifs-event/creer/`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken,
+        },
+        body: JSON.stringify({
+          evenement: evenement.id,
+          label: t.label,
+          prix: t.prix,
+          places_totales: t.places,
+        }),
+      });
+    }
+
+    await chargerEvenementsDepuisAPI();
+    resetEventForm();
+    showToast('Événement ajouté au programme de la semaine');
+  } catch (error) {
+    console.error(error);
+    alert("Erreur lors de la création de l'événement : " + error.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Ajouter au programme de la semaine';
+  }
+}
+
+function resetFilmForm() {
+  filmCandidates = [];
+
+  document.getElementById('manual-film-titre').value = '';
+  document.getElementById('manual-film-genre').value = '';
+  document.getElementById('manual-film-age').value = '';
+  document.getElementById('manual-film-nouveau').checked = false;
+  buildJoursHeures('film-jours-heures');
+}
+
+function resetEventForm() {
+  eventCandidates = [];
+  
+  document.getElementById('manual-event-titre').value = '';
+  document.getElementById('manual-event-type').value = '';
+  document.getElementById('manual-event-description').value = '';
+  document.getElementById('manual-event-date').value = '';
+  document.getElementById('manual-event-heure').value = '';
+  document.getElementById('manual-event-libre').checked = false;
+  document.getElementById('manual-event-tarifs-list').innerHTML = '';
+  document.getElementById('manual-event-tarifs-block').style.display = 'block';
+  document.querySelectorAll('#manual-event-ville .chip-btn').forEach(b => b.classList.remove('selected'));
+}
+
+/* ════════════════════════════════════════════════════════
+   TABLEAUX PROGRAMME
+   ════════════════════════════════════════════════════════ */
+let weeklyFilmsCache = [];
+
+async function chargerFilmsDepuisAPI() {
+  try {
+    const response = await fetch(`${API_BASE}/films/`, { credentials: 'include' });
+    const films = await response.json();
+    weeklyFilmsCache = films;
+    document.getElementById('films-table-body').innerHTML = films.map(f => {
+      const jours = (f.seances || []).map(s => `${s.jour} ${s.heure.slice(0,5)}`).join(' · ') || '—';
+      return `
+        <tr>
+          <td><img class="prog-thumb" src="${f.poster_portrait || 'images/placeholder-poster.jpg'}" alt=""></td>
+          <td>
+            <div style="font-weight:700;color:white;">${f.titre}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,.4);">${f.genre}</div>
+          </td>
+          <td>${jours}</td>
+          <td>${f.type_tarif === 'avant-premiere' ? 'Avant-première' : 'Standard'}</td>
+          <td>
+  <button class="btn-row-action" style="margin-right:6px;" onclick="ouvrirModifFilm(${f.id})">Modifier</button>
+  <button class="btn-row-action danger" onclick="removeFilm(${f.id}, this)">Supprimer</button>
+</td>
+        </tr>`;
+    }).join('');
+  } catch (error) {
+    console.error('Erreur chargement films:', error);
+  }
+}
+
+async function removeFilm(filmId, btn) {
+  if (!confirm('Supprimer ce film du programme ?')) return;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>'; }
+  const csrftoken = await getCsrfToken();
+  await fetch(`${API_BASE}/films/${filmId}/modifier/`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'X-CSRFToken': csrftoken },
+  });
+  await chargerFilmsDepuisAPI();
+}
+
+let weeklyEventsCache = [];
+
+async function chargerEvenementsDepuisAPI() {
+  try {
+    const response = await fetch(`${API_BASE}/evenements/`, { credentials: 'include' });
+    const events = await response.json();
+    weeklyEventsCache = events;
+    document.getElementById('events-table-body').innerHTML = events.map(e => {
+      const villeLabel = e.ville === 'both' ? 'PN + BZ' : e.ville === 'PN' ? 'Pointe-Noire' : 'Brazzaville';
+      const villeCls = e.ville === 'both' ? 'ville-tag both' : 'ville-tag';
+      const tarifLabel = e.entree_libre
+        ? 'Entrée libre'
+        : (e.tarifs && e.tarifs.length ? e.tarifs.map(t => `${t.label}: ${fmtMoney(t.prix)}`).join(' / ') : '—');
+      return `
+      <tr>
+        <td><img class="prog-thumb" src="${e.poster || 'images/placeholder-poster.jpg'}" alt=""></td>
+        <td style="font-weight:700;color:white;">${e.titre}</td>
+        <td><span class="${villeCls}">${villeLabel}</span></td>
+        <td>${e.date_event}<br><span class="ville-tag${categorieEventLabel(e.date_event)==='À venir'?' both':''}" style="margin-top:4px;display:inline-block;">${categorieEventLabel(e.date_event)}</span></td>
+        <td>${tarifLabel}</td>
+        <td>
+          <button class="btn-row-action" style="margin-right:6px;" onclick="ouvrirModifEvent(${e.id})">Modifier</button>
+          <button class="btn-row-action danger" onclick="removeEvent(${e.id}, this)">Supprimer</button>
+        </td>
+      </tr>`;
+    }).join('');
+  } catch (error) {
+    console.error('Erreur chargement événements:', error);
+  }
+}
+
+async function removeEvent(eventId, btn) {
+  if (!confirm('Supprimer cet événement du programme ?')) return;
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>'; }
+  const csrftoken = await getCsrfToken();
+  await fetch(`${API_BASE}/evenements/${eventId}/modifier/`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'X-CSRFToken': csrftoken },
+  });
+  await chargerEvenementsDepuisAPI();
+}
+
+/* ════════════════════════════════════════════════════════
+   ÉDITION FILM
+   ════════════════════════════════════════════════════════ */
+let filmEnEdition = null;
+
+function fermerModifFilm() {
+  document.getElementById('edit-film-modal').classList.remove('open');
+  filmEnEdition = null;
+}
+
+function ouvrirModifFilm(id) {
+  const f = weeklyFilmsCache.find(x => x.id === id);
+  if (!f) return;
+  filmEnEdition = id;
+
+  document.getElementById('edit-film-titre').value = f.titre;
+  document.getElementById('edit-film-genre').value = f.genre;
+  document.getElementById('edit-film-synopsis').value = f.synopsis || '';
+  document.getElementById('edit-film-acteurs').value = f.acteurs || '';
+  document.getElementById('edit-film-duree').value = f.duree || '';
+  document.getElementById('edit-film-age').value = f.age_minimum || '';
+  document.getElementById('edit-film-nouveau').checked = !!f.nouveau;
+  document.getElementById('edit-film-poster').value = '';  document.getElementById('edit-film-landscape').value = '';
+  document.getElementById('edit-film-trailer').value = '';
+
+  document.querySelectorAll('#edit-film-tarif .chip-btn').forEach(b =>
+    b.classList.toggle('selected', b.dataset.value === f.type_tarif)
+  );
+
+  const list = document.getElementById('edit-film-seances-list');
+  list.innerHTML = (f.seances || []).map(s => `
+    <div class="jour-heure-row" data-seance-id="${s.id}">
+      <input class="form-input seance-edit-date" type="date" value="${s.jour}" style="flex:1;">
+      <input class="form-input seance-edit-heure" type="time" value="${s.heure.slice(0,5)}" style="max-width:110px;">
+      <input class="form-input seance-edit-places" type="number" value="${s.places_totales}" min="${s.places_vendues}" style="max-width:90px;" title="Places disponibles">
+      <select class="jour-heure-input seance-edit-langue">
+        <option value="VF" ${s.langue==='VF'?'selected':''}>VF</option>
+        <option value="VO" ${s.langue==='VO'?'selected':''}>VO</option>
+        <option value="VOSTFR" ${s.langue==='VOSTFR'?'selected':''}>VOSTFR</option>
+      </select>
+      <select class="jour-heure-input seance-edit-ville">
+        <option value="PN" ${s.ville==='PN'?'selected':''}>PN</option>
+        <option value="BZ" ${s.ville==='BZ'?'selected':''}>BZ</option>
+      </select>
+      <button type="button" class="btn-row-action danger" onclick="supprimerSeanceEdit(this, ${s.id})">${ico('x')}</button>
+    </div>
+  `).join('');
+
+  document.getElementById('edit-film-modal').classList.add('open');
+}
+
+
+function ajouterLigneSeanceEdit() {
+  const list = document.getElementById('edit-film-seances-list');
+  const row = document.createElement('div');
+  row.className = 'jour-heure-row';
+  row.innerHTML = `
+    <input class="form-input seance-edit-date" type="date" style="flex:1;">
+    <input class="form-input seance-edit-heure" type="time" style="max-width:110px;">
+    <input class="form-input seance-edit-places" type="number" value="296" min="1" style="max-width:90px;" title="Places disponibles">
+    <select class="jour-heure-input seance-edit-langue">
+      <option value="VF">VF</option><option value="VO">VO</option><option value="VOSTFR">VOSTFR</option>
+    </select>
+    <select class="jour-heure-input seance-edit-ville">
+      <option value="PN">PN</option><option value="BZ">BZ</option>
+    </select>
+    <button type="button" class="btn-row-action danger" onclick="this.closest('.jour-heure-row').remove()">${ico('x')}</button>
+  `;
+  list.appendChild(row);
+}
+
+async function supprimerSeanceEdit(btn, seanceId) {
+  if (!confirm('Supprimer cette séance ?')) return;
+  btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>';
+  const csrftoken = await getCsrfToken();
+  await fetch(`${API_BASE}/seances/${seanceId}/modifier/`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'X-CSRFToken': csrftoken },
+  });
+  btn.closest('.jour-heure-row').remove();
+}
+
+async function soumettreModifFilm() {
+  if (!filmEnEdition) return;
+  const chip = document.querySelector('#edit-film-tarif .chip-btn.selected');
+  const formData = new FormData();
+  formData.append('titre', document.getElementById('edit-film-titre').value.trim().toUpperCase());
+  formData.append('genre', document.getElementById('edit-film-genre').value.trim());
+  formData.append('synopsis', document.getElementById('edit-film-synopsis').value.trim());
+  formData.append('acteurs', document.getElementById('edit-film-acteurs').value.trim());
+  formData.append('duree', document.getElementById('edit-film-duree').value.trim());
+  formData.append('type_tarif', chip ? chip.dataset.value : 'standard');
+  const ageVal = document.getElementById('edit-film-age').value.trim();
+  if (ageVal) formData.append('age_minimum', ageVal);
+  formData.append('nouveau', document.getElementById('edit-film-nouveau').checked ? 'true' : 'false');
+  const posterFile = document.getElementById('edit-film-poster').files[0];
+  const landscapeFile = document.getElementById('edit-film-landscape').files[0];
+  const trailerFile = document.getElementById('edit-film-trailer').files[0];
+  if (posterFile) formData.append('poster_portrait', posterFile);
+  if (landscapeFile) formData.append('poster_paysage', landscapeFile);
+  if (trailerFile) formData.append('bande_annonce', trailerFile);
+  const btn = document.querySelector('#edit-film-modal .btn-validate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Modification en cours…';
+
+  try {
+    const csrftoken = await getCsrfToken();
+    const res = await fetch(`${API_BASE}/films/${filmEnEdition}/modifier/`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: formData,
+    });
+    if (!res.ok) throw new Error(JSON.stringify(await res.json()));
+
+    // Séances : PATCH les existantes, POST les nouvelles
+    const rows = document.querySelectorAll('#edit-film-seances-list .jour-heure-row');
+    for (const row of rows) {
+      const jour = row.querySelector('.seance-edit-date').value;
+      const heure = row.querySelector('.seance-edit-heure').value;
+      const langue = row.querySelector('.seance-edit-langue').value;
+      const ville = row.querySelector('.seance-edit-ville').value;
+      const places = parseInt(row.querySelector('.seance-edit-places').value, 10) || 296;
+      if (!jour || !heure) continue;
+      const seanceId = row.dataset.seanceId;
+      const csrftoken2 = await getCsrfToken();
+      if (seanceId) {
+        await fetch(`${API_BASE}/seances/${seanceId}/modifier/`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+          body: JSON.stringify({ jour, heure: heure + ':00', langue, ville, places_totales: places }),
+        });
+      } else {
+        await fetch(`${API_BASE}/seances/creer/`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+          body: JSON.stringify({ film: filmEnEdition, jour, heure: heure + ':00', langue, ville, places_totales: places }),
+        });
+      }
+    }
+
+    await chargerFilmsDepuisAPI();
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer';
+    fermerModifFilm();
+    showToast('Film modifié');
+  } catch (err) {
+    alert('Erreur lors de la modification : ' + err.message);
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   ÉDITION ÉVÉNEMENT
+   ════════════════════════════════════════════════════════ */
+let eventEnEdition = null;
+
+function fermerModifEvent() {
+  document.getElementById('edit-event-modal').classList.remove('open');
+  eventEnEdition = null;
+}
+
+function ouvrirModifEvent(id) {
+  const e = weeklyEventsCache.find(x => x.id === id);
+  if (!e) return;
+  eventEnEdition = id;
+
+  document.getElementById('edit-event-titre').value = e.titre;
+  document.getElementById('edit-event-type').value = e.type_evenement || '';
+  document.getElementById('edit-event-description').value = e.description || '';
+  document.getElementById('edit-event-date').value = e.date_event;
+  document.getElementById('edit-event-heure').value = (e.heure_event || '').slice(0,5);
+  document.getElementById('edit-event-libre').checked = !!e.entree_libre;
+  document.getElementById('edit-event-poster').value = '';
+
+  document.querySelectorAll('#edit-event-ville .chip-btn').forEach(b =>
+    b.classList.toggle('selected', b.dataset.value === e.ville)
+  );
+
+  const list = document.getElementById('edit-event-tarifs-list');
+  list.innerHTML = (e.tarifs || []).map(t => `
+    <div class="jour-heure-row" data-tarif-id="${t.id}">
+      <input class="form-input tarif-edit-label" value="${t.label}" style="flex:1;">
+      <input class="form-input tarif-edit-prix" type="number" value="${t.prix}" style="max-width:120px;">
+      <input class="form-input tarif-edit-places" type="number" value="${t.places_totales}" min="${t.places_vendues}" style="max-width:100px;" title="Places disponibles">
+      <button type="button" class="btn-row-action danger" onclick="supprimerTarifEdit(this, ${t.id})">${ico('x')}</button>
+    </div>
+  `).join('');
+
+  document.getElementById('edit-event-modal').classList.add('open');
+}
+
+function ajouterLigneTarifEventEdit() {
+  const list = document.getElementById('edit-event-tarifs-list');
+  const row = document.createElement('div');
+  row.className = 'jour-heure-row';
+  row.innerHTML = `
+    <input class="form-input tarif-edit-label" placeholder="Ex: Standard, VIP" style="flex:1;">
+    <input class="form-input tarif-edit-prix" type="number" placeholder="Prix FCFA" style="max-width:120px;">
+    <input class="form-input tarif-edit-places" type="number" value="296" min="1" style="max-width:100px;" title="Places disponibles">
+    <button type="button" class="btn-row-action danger" onclick="this.closest('.jour-heure-row').remove()">${ico('x')}</button>
+  `;
+  list.appendChild(row);
+}
+
+async function supprimerTarifEdit(btn, tarifId) {
+  if (!confirm('Supprimer ce tarif ?')) return;
+  btn.disabled = true; btn.innerHTML = '<span class="btn-spinner"></span>';
+  const csrftoken = await getCsrfToken();
+  await fetch(`${API_BASE}/tarifs-event/${tarifId}/modifier/`, {
+    method: 'DELETE',
+    credentials: 'include',
+    headers: { 'X-CSRFToken': csrftoken },
+  });
+  btn.closest('.jour-heure-row').remove();
+}
+
+async function soumettreModifEvent() {
+  if (!eventEnEdition) return;
+  const chip = document.querySelector('#edit-event-ville .chip-btn.selected');
+  const formData = new FormData();
+  formData.append('titre', document.getElementById('edit-event-titre').value.trim().toUpperCase());
+  formData.append('type_evenement', document.getElementById('edit-event-type').value.trim());
+  formData.append('description', document.getElementById('edit-event-description').value.trim());
+  formData.append('ville', chip ? chip.dataset.value : 'PN');
+  formData.append('date_event', document.getElementById('edit-event-date').value);
+  formData.append('heure_event', document.getElementById('edit-event-heure').value);
+  formData.append('entree_libre', document.getElementById('edit-event-libre').checked ? 'true' : 'false');
+  const posterFile = document.getElementById('edit-event-poster').files[0];
+  if (posterFile) formData.append('poster', posterFile);
+  const btn = document.querySelector('#edit-event-modal .btn-validate');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner"></span>Modification en cours…';
+  
+
+  try {
+    const csrftoken = await getCsrfToken();
+    const res = await fetch(`${API_BASE}/evenements/${eventEnEdition}/modifier/`, {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+      body: formData,
+    });
+    if (!res.ok) throw new Error(JSON.stringify(await res.json()));
+
+    const rows = document.querySelectorAll('#edit-event-tarifs-list .jour-heure-row');
+    for (const row of rows) {
+      const label = row.querySelector('.tarif-edit-label').value.trim();
+      const prix = row.querySelector('.tarif-edit-prix').value;
+      const places = parseInt(row.querySelector('.tarif-edit-places').value, 10) || 296;
+      if (!label || !prix) continue;
+      const tarifId = row.dataset.tarifId;
+      const csrftoken2 = await getCsrfToken();
+      if (tarifId) {
+        await fetch(`${API_BASE}/tarifs-event/${tarifId}/modifier/`, {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+          body: JSON.stringify({ label, prix: parseInt(prix, 10), places_totales: places }),
+        });
+      } else {
+        await fetch(`${API_BASE}/tarifs-event/creer/`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken2 },
+          body: JSON.stringify({ evenement: eventEnEdition, label, prix: parseInt(prix, 10), places_totales: places }),
+        });
+      }
+    }
+
+    await chargerEvenementsDepuisAPI();
+    btn.disabled = false;
+    btn.textContent = 'Enregistrer';
+    fermerModifEvent();
+    showToast('Événement modifié');
+  } catch (err) {
+    alert('Erreur lors de la modification : ' + err.message);
+  }
+}
+
+function fmtMoney(n) {
+  const num = parseInt(n, 10);
+  if (isNaN(num)) return n;
+  return num.toLocaleString('fr-FR') + ' FCFA';
+}
+
+function getBornesSemaineAdmin() {
+  const d = window.CP_DEMO_TODAY || new Date();
+  const jour = (d.getDay() + 6) % 7;
+  const lundi = new Date(d); lundi.setHours(0,0,0,0); lundi.setDate(d.getDate() - jour);
+  const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate() + 6); dimanche.setHours(23,59,59,999);
+  return { lundi, dimanche };
+}
+function categorieEventLabel(dateStr) {
+  const { lundi, dimanche } = getBornesSemaineAdmin();
+  const d = new Date(dateStr + 'T00:00:00');
+  if (d < lundi) return 'Passé';
+  if (d <= dimanche) return 'Cette semaine';
+  return 'À venir';
+}
+
+
+/* ════════════════════════════════════════════════════
+   STOCK & PLACES
+   ════════════════════════════════════════════════════ */
+const VILLES_COORDS = { PN: { lat: -4.7761, lng: 11.8636 }, BZ: { lat: -4.2634, lng: 15.2429 } };
+let villeAdminDetectee = null;
+
+function distanceKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function detecterVilleAdmin() {
+  return new Promise((resolve) => {
+    if (!navigator.geolocation) { resolve(null); return; }
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        const dPN = distanceKm(latitude, longitude, VILLES_COORDS.PN.lat, VILLES_COORDS.PN.lng);
+        const dBZ = distanceKm(latitude, longitude, VILLES_COORDS.BZ.lat, VILLES_COORDS.BZ.lng);
+        resolve(dPN <= dBZ ? 'PN' : 'BZ');
+      },
+      () => resolve(null),
+      { timeout: 5000 }
+    );
+  });
+}
+
+async function initVilleStock() {
+  const detectee = await detecterVilleAdmin();
+  villeAdminDetectee = detectee || 'PN';
+  document.querySelectorAll('#stock-ville-toggle .chip-btn').forEach(b => b.classList.toggle('selected', b.dataset.value === villeAdminDetectee));
+  document.getElementById('stock-ville-badge').innerHTML = detectee
+    ? `${ico('pin')} ${detectee === 'PN' ? 'Pointe-Noire' : 'Brazzaville'} (détectée)`
+    : `${ico('pin')} ${villeAdminDetectee === 'PN' ? 'Pointe-Noire' : 'Brazzaville'} (par défaut)`;
+}
+
+function selectVilleStock(v, btn) {
+  villeAdminDetectee = v;
+  document.querySelectorAll('#stock-ville-toggle .chip-btn').forEach(b => b.classList.toggle('selected', b === btn));
+  document.getElementById('stock-ville-badge').innerHTML = `${ico('pin')} ${v === 'PN' ? 'Pointe-Noire' : 'Brazzaville'} (manuel)`;
+  chargerStockDepuisAPI();
+}
+
+async function chargerStockDepuisAPI() {
+  try {
+    const res = await fetch(`${API_BASE}/stock/places/`, { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderStockFilms(data.films);
+    renderStockEvents(data.evenements);
+  } catch (e) {
+    console.error('Erreur chargement stock:', e);
+  }
+}
+
+function stockRowHtml(label, totales, vendues, onMinus, onPlus) {
+  const dispo = totales - vendues;
+  const pct = totales > 0 ? Math.max(0, Math.min(100, (dispo / totales) * 100)) : 0;
+  const critique = dispo <= Math.max(1, Math.round(totales * 0.15));
+  return `
+    <div class="stock-row">
+      <div class="stock-row-label">${label}</div>
+      <div class="stock-row-bar-wrap"><div class="stock-row-bar ${critique ? 'critique' : ''}" style="width:${pct}%"></div></div>
+      <div class="stock-row-count ${dispo <= 0 ? 'sold-out' : ''}">${dispo <= 0 ? 'ÉPUISÉ' : dispo + ' / ' + totales}</div>
+      <div class="stock-adjust">
+        <button class="stock-adjust-btn" title="Vente présentiel (-1)" onclick="${onMinus}">−</button>
+        <button class="stock-adjust-btn" title="Annulation présentiel (+1)" onclick="${onPlus}">+</button>
+      </div>
+    </div>`;
+}
+
+function renderStockFilms(films) {
+  const el = document.getElementById('stock-films-list');
+  const ville = villeAdminDetectee || 'PN';
+  const cartes = films.map(f => {
+    const seances = (f.seances || [])
+      .filter(s => s.ville === ville)
+      .sort((a, b) => (a.jour + a.heure).localeCompare(b.jour + b.heure));
+    if (seances.length === 0) return null;
+    const rows = seances.map(s => {
+      const label = `${s.jour} ${s.heure.slice(0,5)} · ${s.langue}`;
+      return stockRowHtml(label, s.places_totales, s.places_vendues,
+        `ajusterPlacesSeance(${s.id}, -1)`, `ajusterPlacesSeance(${s.id}, 1)`);
+    }).join('');
+    return `
+      <div class="stock-card">
+        <div class="stock-card-head">
+          <img src="${f.poster || 'images/placeholder-poster.jpg'}" alt="">
+          <div class="stock-card-title">${f.titre}</div>
+        </div>
+        ${rows}
+      </div>`;
+  }).filter(Boolean);
+  el.innerHTML = cartes.length ? cartes.join('') : `<div class="history-empty">Aucune séance à ${ville === 'PN' ? 'Pointe-Noire' : 'Brazzaville'} cette semaine.</div>`;
+}
+
+function renderStockEvents(events) {
+  const el = document.getElementById('stock-events-list');
+  const ville = villeAdminDetectee || 'PN';
+  const cartes = events.filter(e => e.ville === ville || e.ville === 'both').map(e => {
+    const rows = (e.tarifs || []).map(t =>
+      stockRowHtml(t.label, t.places_totales, t.places_vendues,
+        `ajusterPlacesTarif(${t.id}, -1)`, `ajusterPlacesTarif(${t.id}, 1)`)
+    ).join('');
+    return `
+      <div class="stock-card">
+        <div class="stock-card-head">
+          <img src="${e.poster || 'images/placeholder-poster.jpg'}" alt="">
+          <div class="stock-card-title">${e.titre}</div>
+        </div>
+        ${rows || '<div class="history-empty">Aucun tarif.</div>'}
+      </div>`;
+  });
+  el.innerHTML = cartes.length ? cartes.join('') : `<div class="history-empty">Aucun événement à ${ville === 'PN' ? 'Pointe-Noire' : 'Brazzaville'} cette semaine.</div>`;
+}
+
+async function ajusterPlacesSeance(seanceId, delta) {
+  const csrftoken = await getCsrfToken();
+  const res = await fetch(`${API_BASE}/stock/seance/${seanceId}/ajuster/`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+    body: JSON.stringify({ delta }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.erreur || 'Erreur.'); return; }
+  await chargerStockDepuisAPI();
+  showToast(delta < 0 ? 'Place décomptée (vente présentiel)' : 'Place remise en stock');
+}
+
+async function ajusterPlacesTarif(tarifId, delta) {
+  const csrftoken = await getCsrfToken();
+  const res = await fetch(`${API_BASE}/stock/tarif-event/${tarifId}/ajuster/`, {
+    method: 'POST', credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+    body: JSON.stringify({ delta }),
+  });
+  const data = await res.json();
+  if (!res.ok) { alert(data.erreur || 'Erreur.'); return; }
+  await chargerStockDepuisAPI();
+  showToast(delta < 0 ? 'Place décomptée (vente présentiel)' : 'Place remise en stock');
+}
+
+/* ════════════════════════════════════════════════════
+   HISTORIQUE CLIENTS (temps réel)
+   ════════════════════════════════════════════════════ */
+let intervalHistoriqueClients = null;
+
+async function chargerHistoriqueClients() {
+  try {
+    const res = await fetch(`${API_BASE}/historique-commandes/`, { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderHistoriqueClients(data);
+  } catch (e) { console.error('Erreur historique clients:', e); }
+}
+
+function renderHistoriqueClients(data) {
+  const body = document.getElementById('cli-hist-body');
+  if (!data || data.length === 0) {
+    body.innerHTML = `<tr><td colspan="6" style="text-align:center;color:rgba(255,255,255,0.35);">Aucune commande cette semaine.</td></tr>`;
+    return;
+  }
+  body.innerHTML = data.map(c => {
+    const d = new Date(c.date_creation);
+    const jour = d.toLocaleDateString('fr-FR', { day:'2-digit', month:'short' });
+    const heure = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    const nature = `${c.titre} · ${c.quantite_places} place(s)`;
+    const natureIco = ico(c.type_objet === 'film' ? 'film' : 'sparkles');
+    const paye = c.statut === 'paye';
+    const statutHtml = paye
+      ? `<span class="cli-hist-statut paye">${ico('check')} Payé</span>`
+      : `<span class="cli-hist-statut attente">${ico('clock')} ${c.statut === 'en_attente_solde' ? 'Solde dû' : 'En attente'}</span>`;
+    return `
+      <tr>
+        <td><strong style="color:white;">@${escapeHtml(c.username)}</strong></td>
+        <td>${natureIco} ${escapeHtml(nature)}</td>
+        <td>${escapeHtml(c.ville)}</td>
+        <td>${jour} · ${heure}</td>
+        <td>${statutHtml}</td>
+        <td>${fmtMoney(c.montant_paye)} / ${fmtMoney(c.montant_total)}</td>
+      </tr>`;
+  }).join('');
+}
+
+/* ════════════════════════════════════════════════════
+   STATISTIQUES
+   ════════════════════════════════════════════════════ */
+async function renderStats() {
+  try {
+    const response = await fetch(`${API_BASE}/stats/films/`, { credentials: 'include' });
+    if (!response.ok) {
+      document.getElementById('rank-billets').innerHTML = `<div class="history-empty">Aucune donnée disponible.</div>`;
+      document.getElementById('rank-recette').innerHTML = `<div class="history-empty">Aucune donnée disponible.</div>`;
+      return;
+    }
+    const data = await response.json();
+
+    document.getElementById('rank-billets').innerHTML = data.par_billets.length
+      ? data.par_billets.map((f, i) => rankRowHtml(f, i, 'billets')).join('')
+      : `<div class="history-empty">Aucune vente cette semaine.</div>`;
+
+    document.getElementById('rank-recette').innerHTML = data.par_recette.length
+      ? data.par_recette.map((f, i) => rankRowHtml(f, i, 'recette')).join('')
+      : `<div class="history-empty">Aucune vente cette semaine.</div>`;
+  } catch (error) {
+    console.error('Erreur chargement stats:', error);
+  }
+}
+
+function rankRowHtml(f, i, mode) {
+  const value = mode === 'billets' ? f.billets + ' billets' : fmtMoney(f.recette);
+  const poster = f.poster || 'images/placeholder-poster.jpg';
+  return `
+    <div class="rank-row">
+      <div class="rank-num">${i + 1}</div>
+      <img class="rank-thumb" src="${poster}" alt="">
+      <div class="rank-info"><div class="rank-title">${f.titre}</div></div>
+      <div class="rank-value">${value}</div>
+    </div>`;
+}
+
+/* ════════════════════════════════════════════════════════
+   CAISSE & SCANS — Validation des billets au comptoir
+   ════════════════════════════════════════════════════════
+
+   Modèle simulé (à remplacer par de vrais appels serveur) :
+   - Ticket de solde : jeton aléatoire généré à la réservation (50% payé).
+     Statut "en_attente" -> reste un solde à encaisser au comptoir.
+   - Une fois encaissé : statut passe à "consomme" et un nouveau jeton
+     (Billet d'entrée) est généré pour le contrôle en salle.
+   - Un code déjà "consomme" rescanné renvoie un écran ROUGE/AMBRE
+     ("déjà utilisé à HH:MM") -> simule la protection anti-photocopie.
+*/
+
+async function chargerHistoriqueScans() {
+  try {
+    const res = await fetch(`${API_BASE}/scans/historique/`, { credentials: 'include' });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderScanHistory(data);
+  } catch (e) { console.error('Erreur historique scans:', e); }
+}
+
+let html5QrCode = null;
+let cameraActive = false;
+let dernierScanTimestamp = 0;
+
+async function arreterCameraApresScan() {
+  if (!cameraActive || !html5QrCode) return;
+  try { await html5QrCode.stop(); } catch (e) {}
+  document.getElementById('qr-reader').style.display = 'none';
+  const btn = document.getElementById('btn-toggle-camera');
+  btn.innerHTML = ico('camera') + ' Activer la caméra';
+  btn.classList.remove('active');
+  cameraActive = false;
+}
+
+async function toggleCamera() {
+  const btn = document.getElementById('btn-toggle-camera');
+  const reader = document.getElementById('qr-reader');
+
+  if (cameraActive) {
+    await html5QrCode.stop();
+    reader.style.display = 'none';
+    btn.innerHTML = ico('camera') + ' Activer la caméra';
+    btn.classList.remove('active');
+    cameraActive = false;
+    return;
+  }
+
+  reader.style.display = 'block';
+  html5QrCode = new Html5Qrcode('qr-reader');
+  try {
+    await html5QrCode.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: { width: 240, height: 240 } },
+      onQrDetecte,
+      () => {} // pas de QR dans la frame — ignoré
+    );
+    btn.innerHTML = ico('square') + ' Arrêter la caméra';
+    btn.classList.add('active');
+    cameraActive = true;
+  } catch (err) {
+    alert("Impossible d'accéder à la caméra : " + err);
+    reader.style.display = 'none';
+  }
+}
+
+function onQrDetecte(jeton) {
+  const maintenant = Date.now();
+  if (maintenant - dernierScanTimestamp < 2500) return; // anti-doublon (mêmes frames répétées)
+  dernierScanTimestamp = maintenant;
+  document.getElementById('scan-code-input').value = jeton;
+  simulerScan();
+}
+
+async function simulerScan() {
+  const input = document.getElementById('scan-code-input');
+  const jeton = input.value.trim();
+
+  if (!jeton) {
+    setScanResult('error', ico('x') + ' Code vide', `<div class="scan-detail-row">Veuillez scanner ou saisir un code.</div>`);
+    return;
+  }
+
+  const csrftoken = await getCsrfToken();
+  const scanHeaders = { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken };
+
+  // 1. Identification en lecture seule — ne modifie rien en base
+  const response = await fetch(`${API_BASE}/scan/identifier/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: scanHeaders,
+    body: JSON.stringify({ jeton_uuid: jeton }),
+  });
+  const data = await response.json();
+
+  if (response.status === 404) {
+    setScanResult('error', ico('x') + ' Code inconnu', `
+      <div class="scan-detail-row"><span>Jeton recherché</span><strong>${escapeHtml(jeton)}</strong></div>
+      <div class="scan-detail-row"><span>Résultat</span><strong style="color:var(--rouge)">Aucun billet correspondant en base</strong></div>
+    `);
+    logHistory(jeton, 'error', 'Inconnu');
+    return;
+  }
+
+  if (response.status === 409) {
+    setScanResult('fraude', ico('alert') + ' FRAUDE — Billet déjà utilisé', `
+      <div class="scan-detail-row"><span>Message</span><strong style="color:#a259ff">${escapeHtml(data.message)}</strong></div>
+    `);
+    logHistory(jeton, 'fraude', data.message);
+    return;
+  }
+
+  if (response.status !== 200) {
+    setScanResult('error', ico('alert') + ' Erreur', `<div class="scan-detail-row">${escapeHtml(data.message || data.erreur || 'Erreur inconnue.')}</div>`);
+    return;
+  }
+
+  // ── Ticket de solde : on affiche et on attend confirmation admin ──
+  if (data.type_jeton === 'solde') {
+    setScanResult('used', ico('clock') + ' Ticket de solde — reste à encaisser', `
+      <div class="scan-detail-row"><span>${escapeHtml(data.titre)}</span><strong>${escapeHtml(data.ville)}</strong></div>
+      <div class="scan-detail-row"><span>Places</span><strong>${data.quantite_places}</strong></div>
+      <div class="scan-detail-row"><span>Déjà payé</span><strong>${fmtMoney(data.montant_paye)}</strong></div>
+      <div class="scan-detail-row"><span>Reste à encaisser</span><span class="scan-solde-due">${fmtMoney(data.reste_a_payer)}</span></div>
+      <button class="btn-encaisser" onclick="validerSolde('${escapeHtml(jeton)}')">${ico('check')} Valider le solde encaissé</button>
+      <div class="scan-hint" style="margin-top:10px;margin-bottom:0;">${ico('alert')} Assurez-vous que le client a payé le reste avant de valider — action irréversible, génère le billet d'entrée.</div>
+    `);
+    logHistory(jeton, 'used', 'Solde identifié — en attente de validation');
+    return;
+  }
+
+  // ── Billet d'entrée : validation directe (comportement inchangé) ──
+  const entreeRes = await fetch(`${API_BASE}/scan/entree/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: scanHeaders,
+    body: JSON.stringify({ jeton_uuid: jeton, scanne_par: 'guichet-admin' }),
+  });
+  const entreeData = await entreeRes.json();
+
+  if (entreeRes.status === 409) {
+    setScanResult('fraude', ico('alert') + ' FRAUDE — Billet déjà utilisé', `
+      <div class="scan-detail-row"><span>Message</span><strong style="color:#a259ff">${escapeHtml(entreeData.message)}</strong></div>
+    `);
+    logHistory(jeton, 'fraude', entreeData.message);
+    return;
+  }
+
+  if (entreeRes.status === 200) {
+    setScanResult('valid', ico('check') + ' Accès autorisé', `
+      <div class="scan-detail-row"><span>Statut</span><strong style="color:var(--vert)">${escapeHtml(entreeData.message)}</strong></div>
+      <div class="scan-detail-row"><span>Points crédités</span><strong style="color:var(--orange)">+${entreeData.points_attribues} pts</strong></div>
+      <div class="scan-detail-row"><span>Total points client</span><strong>${entreeData.points_totaux} pts</strong></div>
+    `);
+    logHistory(jeton, 'valid', `Entrée validée, +${entreeData.points_attribues} pts`);
+    showToast('Entrée validée');
+    return;
+  }
+
+  setScanResult('error', ico('alert') + ' Erreur', `<div class="scan-detail-row">${escapeHtml(entreeData.message || entreeData.erreur || 'Erreur inconnue.')}</div>`);
+}
+
+async function validerSolde(jeton) {
+  const csrftoken = await getCsrfToken();
+  const response = await fetch(`${API_BASE}/scan/encaisser-solde/`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrftoken },
+    body: JSON.stringify({ jeton_uuid: jeton, scanne_par: 'guichet-admin' }),
+  });
+  const data = await response.json();
+
+  if (response.status !== 200) {
+    setScanResult('error', ico('alert') + " Erreur lors de l'encaissement", `<div class="scan-detail-row">${escapeHtml(data.message || data.erreur || 'Erreur inconnue.')}</div>`);
+    return;
+  }
+
+  setScanResult('valid', ico('check') + " Paiement encaissé — billet émis", `
+    <div class="scan-detail-row"><span>Statut</span><strong style="color:var(--vert)">${escapeHtml(data.message)}</strong></div>
+    <div class="billet-genere">
+      <div class="billet-genere-label">${ico('ticket')} Nouveau billet d'entrée généré</div>
+      <div class="billet-genere-code">${escapeHtml(data.nouveau_ticket.jeton_uuid)}</div>
+    </div>
+  `);
+  logHistory(jeton, 'valid', 'Solde encaissé → billet émis');
+  showToast('Paiement encaissé · billet d\'entrée généré');
+}
+function setScanResult(state, title, detailsHtml) {
+  arreterCameraApresScan();
+  const el = document.getElementById('scan-result');
+  el.className = 'scan-result state-' + state;
+  el.innerHTML = `<div class="scan-result-badge">${title}</div>${detailsHtml}`;
+}
+
+async function logHistory() {
+  // La journalisation réelle a lieu côté serveur (identifier/encaisser-solde/entree) —
+  // on se contente de rafraîchir la liste complète de la semaine.
+  await chargerHistoriqueScans();
+}
+
+function renderScanHistory(data) {
+  const el = document.getElementById('scan-history-list');
+  if (!data || data.length === 0) {
+    el.innerHTML = `<div class="history-empty">Aucun scan effectué pour le moment.</div>`;
+    return;
+  }
+  el.innerHTML = data.map(h => {
+    const d = new Date(h.horodatage);
+    const time = d.getHours().toString().padStart(2,'0') + ':' + d.getMinutes().toString().padStart(2,'0');
+    return `
+    <div class="history-row">
+      <span class="history-dot ${h.resultat}"></span>
+      <span class="history-time">${time}</span>
+      <span class="history-code">${escapeHtml(h.code_scanne)}</span>
+      <span class="history-status ${h.resultat}">${escapeHtml(h.note || h.resultat)}</span>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+/* ════════════════════════════════════════════════════════
+   TOAST
+   ════════════════════════════════════════════════════════ */
+function showToast(msg) {
+  let t = document.getElementById('admin-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'admin-toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+/* ════════════════════════════════════════════════════════
+   INITIALISATION
+   ════════════════════════════════════════════════════════ */
+
+function afficherSemaineCourante() {
+  const MOIS = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const aujourdHui = window.CP_DEMO_TODAY || new Date();
+  const jourSemaine = (aujourdHui.getDay() + 5) % 7; // mardi = 0 ... lundi = 6 (fermé)
+  const lundi = new Date(aujourdHui);
+  lundi.setDate(aujourdHui.getDate() - jourSemaine);
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate() + 5);
+
+  let texte;
+  if (lundi.getMonth() === dimanche.getMonth()) {
+    texte = `Semaine du ${lundi.getDate()} au ${dimanche.getDate()} ${MOIS[lundi.getMonth()]} ${lundi.getFullYear()}`;
+  } else {
+    texte = `Semaine du ${lundi.getDate()} ${MOIS[lundi.getMonth()]} au ${dimanche.getDate()} ${MOIS[dimanche.getMonth()]} ${dimanche.getFullYear()}`;
+  }
+
+  ['week-badge-films','week-badge-events','week-badge-stats','week-badge-caisse'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = texte;
+  });
+}
+
+async function deconnecterAdmin() {
+  const csrftoken = await getCsrfToken();
+  try {
+    await fetch(`${API_BASE}/auth/deconnexion/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'X-CSRFToken': csrftoken },
+    });
+  } catch (e) { console.error(e); }
+  window.location.href = 'admin-login.html';
+}
+
+async function verifierAccesAdmin() {
+  try {
+    const res = await fetch(`${API_BASE}/stats/films/`, { credentials: 'include' });
+    if (!res.ok) window.location.href = 'admin-login.html';
+  } catch (e) {
+    window.location.href = 'admin-login.html';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  verifierAccesAdmin();
+  afficherSemaineCourante();
+  buildJoursHeures('film-jours-heures');
+  initVilleStock();
+  Promise.all([
+    chargerFilmsDepuisAPI(),
+    chargerEvenementsDepuisAPI(),
+    renderStats(),
+    chargerStockDepuisAPI(),
+    chargerHistoriqueScans(),
+  ]).finally(() => {
+    document.getElementById('page-curtain')?.classList.add('hide');
+  });
+});
+</script>
+</body>
+</html>

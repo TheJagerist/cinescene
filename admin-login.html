@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connexion Administrateur – CinéScène</title>
+<script src="mock-api.js"></script>
+<script src="icons.js"></script>
+<script src="tutorial-guide.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Montserrat:wght@600;700;800;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --orange: #ff8c00;
+    --orange-dark: #915102;
+    --noir: #0a0a0a;
+    --rouge: #c0392b;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif; background: var(--noir); color: white;
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: 100%; max-width: 380px; background: #141414;
+    border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
+    padding: 42px 36px 32px; text-align: center;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+    animation: slideUp 0.3s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(16px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+  .login-logo { height: 38px; margin-bottom: 22px; }
+  .login-title { font-family: 'Fredoka One', cursive; font-size: 22px; color: var(--orange); margin-bottom: 6px; }
+  .login-sub { font-size: 12.5px; color: rgba(255,255,255,0.4); margin-bottom: 30px; letter-spacing: 0.3px; }
+
+  .login-field { margin-bottom: 16px; text-align: left; }
+  .login-label {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+    color: rgba(255,255,255,0.4); margin-bottom: 7px; display: block;
+  }
+  .login-input {
+    width: 100%; background: #0d0d0d; border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 8px; padding: 12px 14px; color: white; font-size: 14px;
+    font-family: 'Inter', sans-serif; outline: none; transition: border-color 0.15s;
+  }
+  .login-input:focus { border-color: var(--orange); }
+  .login-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .login-error {
+    font-size: 12px; color: var(--rouge); margin: -4px 0 14px; text-align: left; display: none;
+  }
+  .login-error.show { display: block; }
+
+  .btn-login-submit {
+    width: 100%; background: var(--orange); color: white; border: none;
+    border-radius: 8px; padding: 13px; font-weight: 700; font-size: 14px;
+    letter-spacing: 0.3px; cursor: pointer; margin-top: 6px;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn-login-submit:hover { background: var(--orange-dark); }
+  .btn-login-submit:active { transform: scale(0.98); }
+
+  .login-footer {
+    margin-top: 24px; font-size: 11px; color: rgba(255,255,255,0.25); line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+  <div class="login-card">
+    <img src="images/logo.png" alt="CinéScène" class="login-logo">
+    <div class="login-title">Espace Administrateur</div>
+    <div class="login-sub">Gestion de la billetterie</div>
+
+    <form id="login-form" novalidate>
+      <div class="login-field">
+        <label class="login-label" for="admin-id">Identifiant</label>
+        <input class="login-input" type="text" id="admin-id" placeholder="votre identifiant" autocomplete="username">
+      </div>
+      <div class="login-field">
+        <label class="login-label" for="admin-pwd">Mot de passe</label>
+        <input class="login-input" type="password" id="admin-pwd" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div class="login-error" id="login-error">Veuillez renseigner l'identifiant et le mot de passe.</div>
+      <button type="submit" class="btn-login-submit">Se connecter</button>
+    </form>
+
+    <div class="login-footer">
+      Accès réservé au personnel autorisé.<br>
+      © 2026 CinéScène — Projet de démonstration.
+    </div>
+  </div>
+
+<script>
+// ── Authentification admin réelle (Django session) ──────
+  const API_BASE = '/api';
+
+
+function getCookie(name) {
+  const match = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return match ? match.pop() : '';
+}
+
+async function getCsrfToken() {
+  // Visite une route GET légère pour que Django pose le cookie csrftoken
+  await fetch(`${API_BASE}/tarifs-film/`, { credentials: 'include' });
+  return getCookie('csrftoken');
+}
+
+document.getElementById('login-form').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  const id = document.getElementById('admin-id').value.trim();
+  const pwd = document.getElementById('admin-pwd').value.trim();
+  const err = document.getElementById('login-error');
+  const btn = document.querySelector('.btn-login-submit');
+
+  if (!id || !pwd) {
+    err.textContent = "Veuillez renseigner l'identifiant et le mot de passe.";
+    err.classList.add('show');
+    return;
+  }
+
+  err.classList.remove('show');
+  btn.disabled = true;
+  btn.textContent = 'Connexion…';
+
+  try {
+    const csrftoken = await getCsrfToken();
+    const response = await fetch(`${API_BASE}/auth/admin-connexion/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrftoken,
+      },
+      body: JSON.stringify({ username: id, password: pwd }),
+    });
+
+    if (response.ok) {
+      window.location.href = 'admin.html';
+    } else {
+      const data = await response.json();
+      err.textContent = data.erreur || 'Identifiants incorrects.';
+      err.classList.add('show');
+      btn.disabled = false;
+      btn.textContent = 'Se connecter';
+    }
+  } catch (error) {
+    err.textContent = 'Impossible de contacter le serveur. Vérifiez que le backend tourne.';
+    err.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Se connecter';
+  }
+});
+</script>
+</body>
+</html>
